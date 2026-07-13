@@ -1,0 +1,364 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+
+<helmet>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Archivo+Black&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+  <style>
+    @keyframes bru-fade { from { opacity: 0; } to { opacity: 1; } }
+  </style>
+</helmet>
+<x-import component-from-global-scope="IOSDevice" from="./ios-frame.jsx" hint-size="340,760" style="{{ mountStyle }}">
+  <div style="{{ screenStyle }}">
+
+    <sc-if value="{{ isInstall }}" hint-placeholder-val="{{ true }}">
+      <div style="{{ installWrapStyle }}">
+        <div style="{{ wordmarkBigStyle }}">PURE</div>
+        <div style="{{ monoTagStyle }}">ALL NATURAL</div>
+        <div style="{{ installBenefitsStyle }}">
+          <div style="display:flex;gap:10px;align-items:flex-start;">
+            <div style="{{ sqBulletStyle }}"></div>
+            <div style="{{ benefitTextStyle }}">ORDER SNACKS, DRINKS &amp; SUPPLIES TO YOUR CABIN</div>
+          </div>
+          <div style="display:flex;gap:10px;align-items:flex-start;">
+            <div style="{{ sqBulletStyle }}"></div>
+            <div style="{{ benefitTextStyle }}">TRACK YOUR ORDER IN REAL TIME</div>
+          </div>
+          <div style="display:flex;gap:10px;align-items:flex-start;">
+            <div style="{{ sqBulletStyle }}"></div>
+            <div style="{{ benefitTextStyle }}">SECURE CHECKOUT — STRIPE</div>
+          </div>
+        </div>
+        <button style="{{ blockBtnGreenStyle }}" onclick="{{ goInstallHome }}">INSTALL APP</button>
+        <button style="{{ blockBtnGhostStyle }}" onclick="{{ goInstallHome }}">CONTINUE IN BROWSER</button>
+      </div>
+    </sc-if>
+
+    <sc-if value="{{ isHome }}" hint-placeholder-val="{{ false }}">
+      <div style="{{ topBarStyle }}">
+        <div style="{{ wordmarkStyle }}">PURE</div>
+        <div style="{{ cabinTagStyle }}">{{ cabinLabel }}</div>
+      </div>
+      <div style="{{ homeBodyPad }}">
+        <div style="{{ eyebrowStyle }}">CATEGORIES</div>
+        <div style="display:flex;gap:8px;overflow-x:auto;padding-bottom:14px;margin-bottom:4px;">
+          <sc-for list="{{ categories }}" as="cat" hint-placeholder-count="5">
+            <div style="{{ cat.chipStyle }}" onclick="{{ cat.onClick }}">{{ cat.name }}</div>
+          </sc-for>
+        </div>
+        <div style="{{ sectionTitleStyle }}">{{ sectionTitle }}</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;padding-bottom:90px;margin-top:10px;">
+          <sc-for list="{{ visibleProducts }}" as="p" hint-placeholder-count="6">
+            <div style="{{ p.cardStyle }}" onclick="{{ p.onOpen }}">
+              <div style="{{ p.imgStyle }}"></div>
+              <div style="{{ p.nameStyle }}">{{ p.name }}</div>
+              <div style="display:flex;align-items:center;justify-content:space-between;margin-top:4px;">
+                <div style="{{ p.priceStyle }}">{{ p.priceLabel }}</div>
+                <div style="{{ p.addBtnStyle }}" onclick="{{ p.onQuickAdd }}">+</div>
+              </div>
+            </div>
+          </sc-for>
+        </div>
+      </div>
+      <div style="{{ bottomNavStyle }}">
+        <div style="{{ navItemStyle }}" onclick="{{ goHome }}">HOME</div>
+        <div style="{{ navItemStyle }}" onclick="{{ goCart }}">
+          CART
+          <sc-if value="{{ hasCartItems }}" hint-placeholder-val="{{ false }}">
+            <span style="{{ cartBadgeStyle }}">{{ cartCount }}</span>
+          </sc-if>
+        </div>
+      </div>
+    </sc-if>
+
+    <sc-if value="{{ isProduct }}" hint-placeholder-val="{{ false }}">
+      <div style="{{ panelPad }}">
+        <div style="{{ backRowStyle }}" onclick="{{ goHome }}">← BACK</div>
+        <div style="{{ productImgStyle }}"></div>
+        <div style="{{ catLabelStyle }}">{{ selectedProduct.cat }}</div>
+        <div style="{{ productNameStyle }}">{{ selectedProduct.name }}</div>
+        <div style="{{ productPriceStyle }}">{{ selectedProduct.priceLabel }}</div>
+        <div style="{{ productDescStyle }}">{{ selectedProduct.desc }}</div>
+        <div style="display:flex;align-items:center;gap:14px;margin-top:20px;">
+          <div style="{{ qtyBtnStyle }}" onclick="{{ decQty }}">–</div>
+          <div style="{{ qtyValStyle }}">{{ qty }}</div>
+          <div style="{{ qtyBtnStyle }}" onclick="{{ incQty }}">+</div>
+        </div>
+        <button style="{{ addToCartBtnStyle }}" onclick="{{ addToCart }}">{{ addToCartLabel }}</button>
+      </div>
+    </sc-if>
+
+    <sc-if value="{{ isCart }}" hint-placeholder-val="{{ false }}">
+      <div style="{{ panelPad }}">
+        <div style="{{ cartTitleStyle }}">YOUR CART</div>
+        <sc-if value="{{ hasCartItems }}" hint-placeholder-val="{{ true }}">
+          <div style="display:flex;flex-direction:column;gap:12px;">
+            <sc-for list="{{ cartItems }}" as="ci" hint-placeholder-count="2">
+              <div style="display:flex;align-items:center;gap:12px;border-bottom:2px solid #0A0A0A;padding-bottom:10px;">
+                <div style="{{ ci.thumbStyle }}"></div>
+                <div style="flex:1;">
+                  <div style="{{ ci.nameStyle }}">{{ ci.name }}</div>
+                  <div style="{{ ci.lineStyle }}">{{ ci.lineLabel }}</div>
+                </div>
+                <div style="{{ removeXStyle }}" onclick="{{ ci.onRemove }}">×</div>
+              </div>
+            </sc-for>
+          </div>
+          <div style="{{ subtotalRowStyle }}">
+            <div>SUBTOTAL</div><div>{{ subtotalLabel }}</div>
+          </div>
+
+          <div style="margin-top:20px;">
+            <div style="{{ eyebrowStyle }}">DELIVERY WINDOW</div>
+            <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:10px;margin-bottom:14px;">
+              <sc-for list="{{ timeSlots }}" as="slot" hint-placeholder-count="3">
+                <div style="{{ slot.chipStyle }}" onclick="{{ slot.onClick }}">{{ slot.label }}</div>
+              </sc-for>
+            </div>
+            <input style="{{ inputStyle }}" placeholder="CABIN NAME" value="{{ cabinNumber }}" onChange="{{ onCabinChange }}" />
+          </div>
+
+          <button style="{{ payBtnStyle }}" onclick="{{ checkout }}">PAY WITH CARD — {{ subtotalLabel }}</button>
+          <div style="{{ stripeCaptionStyle }}">SECURE CHECKOUT — STRIPE</div>
+        </sc-if>
+        <sc-if value="{{ hasCartItems }}" hint-placeholder-val="{{ false }}" negate="true">
+          <div style="{{ emptyCartStyle }}">YOUR CART IS EMPTY</div>
+          <button style="{{ browseBtnStyle }}" onclick="{{ goHome }}">BROWSE SHOP</button>
+        </sc-if>
+      </div>
+      <div style="{{ bottomNavStyle }}">
+        <div style="{{ navItemStyle }}" onclick="{{ goHome }}">HOME</div>
+        <div style="{{ navItemActiveStyle }}" onclick="{{ goCart }}">CART</div>
+      </div>
+    </sc-if>
+
+    <sc-if value="{{ isConfirm }}" hint-placeholder-val="{{ false }}">
+      <div style="{{ panelPad }}">
+        <div style="{{ confirmWrapStyle }}">
+          <div style="{{ checkBoxStyle }}">
+            <div style="{{ checkBarShortStyle }}"></div>
+            <div style="{{ checkBarLongStyle }}"></div>
+          </div>
+          <div style="{{ confirmTitleStyle }}">ORDER CONFIRMED</div>
+          <div style="{{ confirmMetaStyle }}">ORDER #{{ orderNumber }} — {{ deliverySummary }}</div>
+        </div>
+        <div style="display:flex;justify-content:space-between;margin-top:30px;padding:0 4px;">
+          <sc-for list="{{ statusSteps }}" as="step" hint-placeholder-count="4">
+            <div style="display:flex;flex-direction:column;align-items:center;gap:6px;flex:1;">
+              <div style="{{ step.dotStyle }}"></div>
+              <div style="{{ step.labelStyle }}">{{ step.label }}</div>
+            </div>
+          </sc-for>
+        </div>
+        <button style="{{ backToShopBtnStyle }}" onclick="{{ backToShop }}">BACK TO SHOP</button>
+      </div>
+    </sc-if>
+
+  </div>
+</x-import>
+
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;:{&quot;width&quot;:340,&quot;height&quot;:760}}">
+
+const INK = '#0A0A0A';
+const PAPER = 'oklch(0.965 0.004 235)';
+const GREEN = 'oklch(0.64 0.18 142)';
+
+const PRODUCTS = [
+  { id: 'p1', cat: 'FOOD', name: 'TRAIL MIX', price: 6, desc: 'A hearty mix of nuts, dried fruit and chocolate — good fuel for a hike or a fireside snack.' },
+  { id: 'p2', cat: 'FOOD', name: 'INSTANT OATMEAL', price: 5, desc: 'Single-serve oats, ready in two minutes. Comes with maple and cinnamon packets.' },
+  { id: 'p3', cat: 'FOOD', name: 'BREAKFAST KIT', price: 14, desc: 'Eggs, bacon, bread and butter — everything for a slow morning at the cabin.' },
+  { id: 'p4', cat: 'BEVERAGES', name: 'LOCAL IPA 6-PACK', price: 15, desc: 'Cold, from a brewery twenty minutes down the road. Delivered chilled.' },
+  { id: 'p5', cat: 'BEVERAGES', name: 'COLD BREW COFFEE', price: 6, desc: 'Bottled cold brew, no fridge required until you open it.' },
+  { id: 'p6', cat: 'BEVERAGES', name: 'SPARKLING WATER', price: 4, desc: '4-pack of sparkling water, lightly citrus.' },
+  { id: 'p7', cat: 'FIREWOOD', name: 'FIREWOOD BUNDLE', price: 18, desc: 'Seasoned hardwood, enough for one full evening by the fire pit.' },
+  { id: 'p8', cat: 'FIREWOOD', name: 'FIRE STARTER KIT', price: 9, desc: 'Kindling, matches and starter cubes — everything but the wood.' },
+  { id: 'p9', cat: 'FIREWOOD', name: 'PROPANE CANISTER', price: 12, desc: 'Standard 1lb canister for the cabin stove or lantern.' },
+  { id: 'p10', cat: 'LOCAL GOODS', name: 'MAPLE SYRUP', price: 11, desc: 'Small-batch, from a farm up the valley. Take a jar home.' },
+  { id: 'p11', cat: 'LOCAL GOODS', name: 'HONEY JAR', price: 9, desc: 'Raw wildflower honey from a local apiary.' },
+  { id: 'p12', cat: 'LOCAL GOODS', name: 'WOOL SOCKS', price: 16, desc: 'Thick hand-knit wool socks — cold-floor insurance.' },
+  { id: 'p13', cat: 'TOILETRIES', name: 'TRAVEL SOAP', price: 5, desc: 'Unscented bar soap in travel size.' },
+  { id: 'p14', cat: 'TOILETRIES', name: 'SUNSCREEN', price: 8, desc: 'SPF 30, broad spectrum, small enough for a daypack.' },
+  { id: 'p15', cat: 'TOILETRIES', name: 'BUG SPRAY', price: 7, desc: 'DEET-free repellent, effective through dusk.' },
+];
+
+class Component extends DCLogic {
+  state = {
+    screen: 'install',
+    activeCat: null,
+    selectedId: null,
+    cart: {},
+    qty: 1,
+    cabinNumber: '',
+    slotIdx: null,
+    orderNumber: null,
+  };
+
+  go(screen) { this.setState({ screen }); }
+
+  renderVals() {
+    const s = this.state;
+    const money = (n) => '£' + n.toFixed(2);
+    const mono = "'Space Mono',monospace";
+    const disp = "'Archivo Black',sans-serif";
+
+    const chipStyleBase = (active) => ({
+      fontFamily: mono, fontSize: '11px', fontWeight: 700, letterSpacing: '0.03em', whiteSpace: 'nowrap',
+      padding: '8px 12px', border: `2px solid ${INK}`, cursor: 'pointer', flexShrink: 0,
+      background: active ? INK : 'transparent', color: active ? '#fff' : INK,
+    });
+
+    const catNames = [...new Set(PRODUCTS.map(p => p.cat))];
+    const categories = catNames.map(name => ({
+      name,
+      chipStyle: chipStyleBase(s.activeCat === name),
+      onClick: () => this.setState({ activeCat: s.activeCat === name ? null : name }),
+    }));
+
+    const shown = s.activeCat ? PRODUCTS.filter(p => p.cat === s.activeCat) : PRODUCTS.slice(0, 6);
+    const sectionTitle = s.activeCat ? s.activeCat : 'POPULAR PICKS';
+
+    const stripeBg = (flip) => `repeating-linear-gradient(${flip ? 135 : 45}deg, ${INK} 0 6px, ${GREEN} 6px 12px, ${PAPER} 12px 18px)`;
+
+    const cardStyle = { background: '#fff', border: `2px solid ${INK}`, padding: '8px', cursor: 'pointer' };
+    const imgStyle = { height: '74px', background: stripeBg(false), marginBottom: '2px' };
+    const nameStyle = { fontFamily: disp, fontSize: '11px', color: INK, marginTop: '8px', lineHeight: 1.2 };
+    const priceStyle = { fontFamily: mono, fontSize: '12px', fontWeight: 700, color: INK };
+    const addBtnStyle = { width: '22px', height: '22px', background: INK, color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '15px', cursor: 'pointer', lineHeight: 1 };
+
+    const visibleProducts = shown.map((p, i) => ({
+      ...p,
+      priceLabel: money(p.price),
+      cardStyle, imgStyle: { ...imgStyle, background: stripeBg(i % 2 === 0) }, nameStyle, priceStyle, addBtnStyle,
+      onOpen: () => this.setState({ selectedId: p.id, screen: 'product', qty: 1 }),
+      onQuickAdd: (e) => { e && e.stopPropagation && e.stopPropagation(); this.setState(st => ({ cart: { ...st.cart, [p.id]: (st.cart[p.id] || 0) + 1 } })); },
+    }));
+
+    const selectedProduct = PRODUCTS.find(p => p.id === s.selectedId) || PRODUCTS[0];
+
+    const cartEntries = Object.entries(s.cart).filter(([, q]) => q > 0);
+    const cartCount = cartEntries.reduce((sum, [, q]) => sum + q, 0);
+    const cartItems = cartEntries.map(([id, q], i) => {
+      const p = PRODUCTS.find(pp => pp.id === id);
+      return {
+        id, name: p.name, lineLabel: `${q} × ${money(p.price)}`,
+        nameStyle: { fontFamily: disp, fontSize: '12px', color: INK },
+        lineStyle: { fontFamily: mono, fontSize: '11px', color: '#555' },
+        thumbStyle: { width: '42px', height: '42px', flexShrink: 0, background: stripeBg(i % 2 === 0), border: `2px solid ${INK}` },
+        onRemove: () => this.setState(st => { const c = { ...st.cart }; delete c[id]; return { cart: c }; }),
+      };
+    });
+    const subtotal = cartEntries.reduce((sum, [id, q]) => sum + q * PRODUCTS.find(p => p.id === id).price, 0);
+
+    const timeSlotDefs = ['4–5 PM', '5–6 PM', '6–7 PM'];
+    const timeSlots = timeSlotDefs.map((label, i) => ({
+      label,
+      chipStyle: chipStyleBase(s.slotIdx === i),
+      onClick: () => this.setState({ slotIdx: i }),
+    }));
+
+    const blockBtnBase = { appearance: 'none', WebkitAppearance: 'none', margin: 0, borderRadius: 0, outline: 'none', border: `4px solid ${INK}`, padding: '20px', width: '100%', fontFamily: disp, fontWeight: 900, fontSize: '17px', letterSpacing: '0.03em', cursor: 'pointer', textTransform: 'uppercase', boxSizing: 'border-box' };
+
+    const statusLabels = ['RECEIVED', 'PREPARING', 'ON THE WAY', 'DELIVERED'];
+    const statusSteps = statusLabels.map((label, i) => ({
+      label,
+      labelStyle: { fontFamily: mono, fontSize: '9px', letterSpacing: '0.02em', color: i <= 1 ? INK : '#999', textAlign: 'center' },
+      dotStyle: { width: '14px', height: '14px', background: i <= 1 ? INK : '#fff', border: `2px solid ${i <= 1 ? INK : '#999'}` },
+    }));
+
+    const deliverySummary = `CABIN ${s.cabinNumber || '—'} · ${s.slotIdx != null ? timeSlotDefs[s.slotIdx] : 'WINDOW PENDING'}`;
+
+    return {
+      mountStyle: { width: '340px' },
+      screenStyle: { background: s.screen === 'install' ? INK : PAPER, minHeight: '100%', animation: 'bru-fade 0.15s ease' },
+      panelPad: { padding: '60px 18px 0' },
+      homeBodyPad: { padding: '18px 18px 0' },
+
+      isInstall: s.screen === 'install',
+      isHome: s.screen === 'home',
+      isProduct: s.screen === 'product',
+      isCart: s.screen === 'cart',
+      isConfirm: s.screen === 'confirm',
+
+      installWrapStyle: { background: INK, minHeight: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center', padding: '70px 22px 0', boxSizing: 'border-box' },
+      wordmarkBigStyle: { fontFamily: disp, fontSize: '46px', color: '#fff', letterSpacing: '-0.01em', lineHeight: 1 },
+      monoTagStyle: { fontFamily: mono, fontSize: '11px', letterSpacing: '0.15em', color: GREEN, marginTop: '8px' },
+      installBenefitsStyle: { display: 'flex', flexDirection: 'column', gap: '14px', marginTop: '46px', textAlign: 'left', width: '100%' },
+      sqBulletStyle: { width: '9px', height: '9px', background: GREEN, flexShrink: 0, marginTop: '3px' },
+      benefitTextStyle: { fontFamily: mono, fontSize: '11px', letterSpacing: '0.02em', color: '#fff', lineHeight: 1.5 },
+      blockBtnGreenStyle: { ...blockBtnBase, background: GREEN, color: INK, marginTop: '46px' },
+      blockBtnBlackStyle: { ...blockBtnBase, background: INK, color: '#fff' },
+      blockBtnGhostStyle: { ...blockBtnBase, background: 'transparent', color: '#fff', border: `3px solid #fff`, boxShadow: 'none', marginTop: '14px' },
+      goInstallHome: () => this.go('home'),
+
+      topBarStyle: { background: INK, padding: '58px 18px 18px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' },
+      wordmarkStyle: { fontFamily: disp, fontSize: '22px', color: '#fff' },
+      cabinTagStyle: { fontFamily: mono, fontSize: '10px', fontWeight: 700, letterSpacing: '0.05em', color: INK, background: GREEN, padding: '5px 9px' },
+      cabinLabel: 'SET CABIN →',
+      eyebrowStyle: { fontFamily: mono, fontSize: '11px', letterSpacing: '0.1em', color: INK, marginTop: '14px' },
+      sectionTitleStyle: { fontFamily: mono, fontSize: '11px', letterSpacing: '0.1em', color: INK, marginTop: '14px' },
+      categories, sectionTitle, visibleProducts,
+
+      bottomNavStyle: { position: 'sticky', bottom: 0, display: 'flex', background: INK, borderTop: `2px solid ${INK}` },
+      navItemStyle: { flex: 1, textAlign: 'center', padding: '14px 0 18px', fontFamily: mono, fontSize: '11px', fontWeight: 700, letterSpacing: '0.08em', color: '#fff', cursor: 'pointer', position: 'relative' },
+      navItemActiveStyle: { flex: 1, textAlign: 'center', padding: '14px 0 18px', fontFamily: mono, fontSize: '11px', fontWeight: 700, letterSpacing: '0.08em', color: GREEN, cursor: 'pointer', borderTop: `2px solid ${GREEN}`, position: 'relative' },
+      cartBadgeStyle: { marginLeft: '5px', background: GREEN, color: INK, fontSize: '9px', fontFamily: mono, fontWeight: 700, padding: '1px 5px' },
+      hasCartItems: cartCount > 0,
+      cartCount,
+      goHome: () => this.go('home'),
+      goCart: () => this.go('cart'),
+
+      backRowStyle: { fontFamily: mono, fontSize: '12px', fontWeight: 700, letterSpacing: '0.05em', color: INK, cursor: 'pointer', paddingBottom: '14px' },
+      productImgStyle: { height: '190px', background: stripeBg(true), border: `2px solid ${INK}` },
+      catLabelStyle: { fontFamily: mono, fontSize: '11px', letterSpacing: '0.1em', color: GREEN, marginTop: '16px', fontWeight: 700 },
+      productNameStyle: { fontFamily: disp, fontSize: '22px', color: INK, marginTop: '4px', lineHeight: 1.1 },
+      productPriceStyle: { fontFamily: mono, fontSize: '16px', fontWeight: 700, color: INK, marginTop: '6px' },
+      productDescStyle: { fontFamily: mono, fontSize: '12px', lineHeight: 1.6, color: '#444', marginTop: '12px' },
+      selectedProduct: { ...selectedProduct, priceLabel: money(selectedProduct.price) },
+      qtyBtnStyle: { width: '32px', height: '32px', border: `2px solid ${INK}`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '16px', color: INK, cursor: 'pointer', fontFamily: disp },
+      qtyValStyle: { fontFamily: mono, fontSize: '14px', fontWeight: 700, color: INK, minWidth: '20px', textAlign: 'center' },
+      qty: s.qty,
+      decQty: () => this.setState(st => ({ qty: Math.max(1, st.qty - 1) })),
+      incQty: () => this.setState(st => ({ qty: st.qty + 1 })),
+      addToCartLabel: `ADD TO CART — ${money(selectedProduct.price * s.qty)}`,
+      addToCart: () => this.setState(st => ({ cart: { ...st.cart, [selectedProduct.id]: (st.cart[selectedProduct.id] || 0) + st.qty }, screen: 'home' })),
+      addToCartBtnStyle: { ...blockBtnBase, background: INK, color: '#fff', marginTop: '24px', marginBottom: '12px' },
+
+      cartTitleStyle: { fontFamily: disp, fontSize: '24px', color: INK, marginBottom: '16px' },
+      cartItems, subtotalLabel: money(subtotal),
+      subtotalRowStyle: { display: 'flex', justifyContent: 'space-between', fontFamily: disp, fontSize: '14px', color: INK, marginTop: '14px' },
+      removeXStyle: { color: INK, cursor: 'pointer', fontSize: '18px', fontWeight: 700, padding: '0 4px' },
+      cabinNumber: s.cabinNumber,
+      onCabinChange: (e) => this.setState({ cabinNumber: e.target.value }),
+      inputStyle: { width: '100%', border: `2px solid ${INK}`, padding: '13px', fontFamily: mono, fontSize: '12px', letterSpacing: '0.05em', color: INK, background: '#fff', boxSizing: 'border-box' },
+      timeSlots,
+      stripeCaptionStyle: { textAlign: 'center', fontFamily: mono, fontSize: '10px', letterSpacing: '0.05em', color: '#777', marginTop: '10px' },
+      emptyCartStyle: { fontFamily: mono, fontSize: '12px', letterSpacing: '0.05em', color: '#777', textAlign: 'center', paddingTop: '60px' },
+      checkout: () => this.setState({ screen: 'confirm', orderNumber: Math.floor(1000 + Math.random() * 9000) }),
+      payBtnStyle: { ...blockBtnBase, background: GREEN, color: INK, marginTop: '22px' },
+      browseBtnStyle: { ...blockBtnBase, background: INK, color: '#fff', marginTop: '16px' },
+
+      confirmWrapStyle: { display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center', paddingTop: '30px', gap: '8px' },
+      checkBoxStyle: { width: '54px', height: '54px', background: GREEN, border: `2px solid ${INK}`, position: 'relative', marginBottom: '8px' },
+      checkBarShortStyle: { position: 'absolute', width: '9px', height: '3px', background: INK, left: '14px', top: '29px', transform: 'rotate(45deg)' },
+      checkBarLongStyle: { position: 'absolute', width: '20px', height: '3px', background: INK, left: '20px', top: '25px', transform: 'rotate(-45deg)' },
+      confirmTitleStyle: { fontFamily: disp, fontSize: '21px', color: INK, marginTop: '6px' },
+      confirmMetaStyle: { fontFamily: mono, fontSize: '11px', color: '#555', letterSpacing: '0.02em' },
+      orderNumber: s.orderNumber, deliverySummary,
+      statusSteps,
+      backToShop: () => this.setState({ screen: 'home', cart: {}, activeCat: null }),
+      backToShopBtnStyle: { ...blockBtnBase, background: INK, color: '#fff', marginTop: '36px' },
+    };
+  }
+}
+
+</script>
+</body>
+</html>

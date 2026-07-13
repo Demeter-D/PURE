@@ -1,0 +1,371 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Public+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    @keyframes ph-fade { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
+  </style>
+</helmet>
+<x-import component-from-global-scope="IOSDevice" from="./ios-frame.jsx" hint-size="375,812" style="{{ mountStyle }}">
+  <div style="{{ screenStyle }}">
+
+    <sc-if value="{{ isInstall }}" hint-placeholder-val="{{ true }}">
+      <div style="{{ panelPad }}">
+        <div style="display:flex;flex-direction:column;align-items:center;text-align:center;gap:18px;padding-top:56px;">
+          <div style="{{ appIconStyle }}">P</div>
+          <div style="font-family:'Instrument Serif',serif;font-style:italic;font-size:30px;color:{{ theme.ink }};">Install PURE</div>
+          <div style="font-family:'Public Sans',sans-serif;font-size:14px;color:{{ theme.inkMuted }};line-height:1.5;max-width:260px;">Add PURE to your home screen for one-tap ordering from the cabin — works offline, no app store needed.</div>
+          <div style="display:flex;flex-direction:column;gap:10px;width:100%;margin-top:12px;">
+            <div style="display:flex;align-items:center;gap:12px;font-family:'Public Sans',sans-serif;font-size:13px;color:{{ theme.ink }};">
+              <div style="{{ bulletDotStyle }}"></div>
+              <div>Order snacks, drinks &amp; supplies to your door</div>
+            </div>
+            <div style="display:flex;align-items:center;gap:12px;font-family:'Public Sans',sans-serif;font-size:13px;color:{{ theme.ink }};">
+              <div style="{{ bulletDotStyle }}"></div>
+              <div>Track your order in real time</div>
+            </div>
+            <div style="display:flex;align-items:center;gap:12px;font-family:'Public Sans',sans-serif;font-size:13px;color:{{ theme.ink }};">
+              <div style="{{ bulletDotStyle }}"></div>
+              <div>Secure checkout, powered by Stripe</div>
+            </div>
+          </div>
+          <button style="{{ primaryBtnStyle }}" onclick="{{ goInstallHome }}">Install app</button>
+          <button style="{{ ghostBtnStyle }}" onclick="{{ goInstallHome }}">Continue in browser</button>
+        </div>
+      </div>
+    </sc-if>
+
+    <sc-if value="{{ isHome }}" hint-placeholder-val="{{ false }}">
+      <div style="{{ panelPad }}">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:18px;">
+          <div style="font-family:'Instrument Serif',serif;font-style:italic;font-size:26px;color:{{ theme.ink }};">PURE</div>
+          <div style="{{ cabinPillStyle }}">{{ cabinLabel }}</div>
+        </div>
+        <div style="font-family:'Public Sans',sans-serif;font-size:12px;letter-spacing:0.06em;text-transform:uppercase;color:{{ theme.inkMuted }};margin-bottom:10px;">Categories</div>
+        <div style="display:flex;gap:8px;overflow-x:auto;padding-bottom:14px;margin-bottom:6px;">
+          <sc-for list="{{ categories }}" as="cat" hint-placeholder-count="5">
+            <div style="{{ cat.chipStyle }}" onclick="{{ cat.onClick }}">{{ cat.name }}</div>
+          </sc-for>
+        </div>
+        <div style="font-family:'Public Sans',sans-serif;font-size:12px;letter-spacing:0.06em;text-transform:uppercase;color:{{ theme.inkMuted }};margin:14px 0 10px;">{{ sectionTitle }}</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;padding-bottom:90px;">
+          <sc-for list="{{ visibleProducts }}" as="p" hint-placeholder-count="6">
+            <div style="{{ p.cardStyle }}" onclick="{{ p.onOpen }}">
+              <div style="{{ p.imgStyle }}">
+                <span style="font-family:'Public Sans',monospace;font-size:9px;letter-spacing:0.03em;color:{{ theme.inkMuted }};">photo: {{ p.name }}</span>
+              </div>
+              <div style="font-family:'Public Sans',sans-serif;font-size:13px;font-weight:600;color:{{ theme.ink }};margin-top:8px;">{{ p.name }}</div>
+              <div style="display:flex;align-items:center;justify-content:space-between;margin-top:2px;">
+                <div style="font-family:'Public Sans',sans-serif;font-size:13px;color:{{ theme.inkMuted }};">{{ p.priceLabel }}</div>
+                <div style="{{ p.addBtnStyle }}" onclick="{{ p.onQuickAdd }}">+</div>
+              </div>
+            </div>
+          </sc-for>
+        </div>
+      </div>
+      <div style="{{ bottomNavStyle }}">
+        <div style="{{ navItemStyle }}" onclick="{{ goHome }}">
+          <div style="{{ navDotStyleHome }}"></div>
+          <div style="font-family:'Public Sans',sans-serif;font-size:10px;color:{{ theme.ink }};">Home</div>
+        </div>
+        <div style="{{ navItemStyle }}" onclick="{{ goCart }}">
+          <div style="position:relative;">
+            <div style="{{ navSquareStyle }}"></div>
+            <sc-if value="{{ hasCartItems }}" hint-placeholder-val="{{ false }}">
+              <div style="{{ cartBadgeStyle }}">{{ cartCount }}</div>
+            </sc-if>
+          </div>
+          <div style="font-family:'Public Sans',sans-serif;font-size:10px;color:{{ theme.inkMuted }};">Cart</div>
+        </div>
+      </div>
+    </sc-if>
+
+    <sc-if value="{{ isProduct }}" hint-placeholder-val="{{ false }}">
+      <div style="{{ panelPad }}">
+        <div style="{{ backRowStyle }}" onclick="{{ goHome }}">
+          <div style="{{ backArrowStyle }}"></div>
+          <div style="font-family:'Public Sans',sans-serif;font-size:13px;color:{{ theme.inkMuted }};">Back</div>
+        </div>
+        <div style="{{ productImgStyle }}">
+          <span style="font-family:'Public Sans',monospace;font-size:11px;color:{{ theme.inkMuted }};">product photo</span>
+        </div>
+        <div style="font-family:'Public Sans',sans-serif;font-size:11px;letter-spacing:0.06em;text-transform:uppercase;color:{{ theme.accent }};margin-top:16px;">{{ selectedProduct.cat }}</div>
+        <div style="font-family:'Instrument Serif',serif;font-size:24px;color:{{ theme.ink }};margin-top:4px;">{{ selectedProduct.name }}</div>
+        <div style="font-family:'Public Sans',sans-serif;font-size:16px;color:{{ theme.ink }};margin-top:6px;">{{ selectedProduct.priceLabel }}</div>
+        <div style="font-family:'Public Sans',sans-serif;font-size:13px;line-height:1.6;color:{{ theme.inkMuted }};margin-top:12px;">{{ selectedProduct.desc }}</div>
+        <div style="display:flex;align-items:center;gap:14px;margin-top:22px;">
+          <div style="{{ qtyBtnStyle }}" onclick="{{ decQty }}">–</div>
+          <div style="font-family:'Public Sans',sans-serif;font-size:14px;color:{{ theme.ink }};min-width:20px;text-align:center;">{{ qty }}</div>
+          <div style="{{ qtyBtnStyle }}" onclick="{{ incQty }}">+</div>
+        </div>
+        <button style="{{ primaryBtnStyle }};margin-top:24px;" onclick="{{ addToCart }}">{{ addToCartLabel }}</button>
+      </div>
+    </sc-if>
+
+    <sc-if value="{{ isCart }}" hint-placeholder-val="{{ false }}">
+      <div style="{{ panelPad }}">
+        <div style="font-family:'Instrument Serif',serif;font-size:24px;color:{{ theme.ink }};margin-bottom:16px;">Your cart</div>
+        <sc-if value="{{ hasCartItems }}" hint-placeholder-val="{{ true }}">
+          <div style="display:flex;flex-direction:column;gap:14px;">
+            <sc-for list="{{ cartItems }}" as="ci" hint-placeholder-count="2">
+              <div style="display:flex;align-items:center;gap:12px;">
+                <div style="{{ ci.thumbStyle }}"></div>
+                <div style="flex:1;">
+                  <div style="font-family:'Public Sans',sans-serif;font-size:13px;font-weight:600;color:{{ theme.ink }};">{{ ci.name }}</div>
+                  <div style="font-family:'Public Sans',sans-serif;font-size:12px;color:{{ theme.inkMuted }};">{{ ci.lineLabel }}</div>
+                </div>
+                <div style="{{ removeXStyle }}" onclick="{{ ci.onRemove }}">×</div>
+              </div>
+            </sc-for>
+          </div>
+          <div style="{{ dividerStyle }}"></div>
+          <div style="display:flex;justify-content:space-between;font-family:'Public Sans',sans-serif;font-size:14px;color:{{ theme.ink }};font-weight:600;">
+            <div>Subtotal</div><div>{{ subtotalLabel }}</div>
+          </div>
+
+          <div style="margin-top:22px;">
+            <div style="font-family:'Public Sans',sans-serif;font-size:12px;letter-spacing:0.06em;text-transform:uppercase;color:{{ theme.inkMuted }};margin-bottom:10px;">Delivery</div>
+
+            <sc-if value="{{ showCabinInput }}" hint-placeholder-val="{{ false }}">
+              <input style="{{ inputStyle }}" placeholder="Cabin number" value="{{ cabinNumber }}" onChange="{{ onCabinChange }}" />
+            </sc-if>
+            <sc-if value="{{ showCabinLocked }}" hint-placeholder-val="{{ false }}">
+              <div style="{{ cabinLockedStyle }}">Delivering to Cabin {{ cabinNumber }} — detected via your stay QR</div>
+            </sc-if>
+            <sc-if value="{{ showTimeSlots }}" hint-placeholder-val="{{ false }}">
+              <div style="font-family:'Public Sans',sans-serif;font-size:12px;color:{{ theme.inkMuted }};margin:12px 0 8px;">Delivery window</div>
+              <div style="display:flex;gap:8px;flex-wrap:wrap;">
+                <sc-for list="{{ timeSlots }}" as="slot" hint-placeholder-count="3">
+                  <div style="{{ slot.chipStyle }}" onclick="{{ slot.onClick }}">{{ slot.label }}</div>
+                </sc-for>
+              </div>
+            </sc-if>
+          </div>
+
+          <button style="{{ primaryBtnStyle }};margin-top:26px;" onclick="{{ checkout }}">Pay with card — {{ subtotalLabel }}</button>
+          <div style="text-align:center;font-family:'Public Sans',sans-serif;font-size:11px;color:{{ theme.inkMuted }};margin-top:10px;">Secure checkout powered by Stripe</div>
+        </sc-if>
+        <sc-if value="{{ hasCartItems }}" hint-placeholder-val="{{ false }}" negate="true">
+          <div style="font-family:'Public Sans',sans-serif;font-size:13px;color:{{ theme.inkMuted }};text-align:center;padding-top:60px;">Your cart is empty.</div>
+          <button style="{{ ghostBtnStyle }};margin-top:16px;" onclick="{{ goHome }}">Browse shop</button>
+        </sc-if>
+      </div>
+      <div style="{{ bottomNavStyle }}">
+        <div style="{{ navItemStyle }}" onclick="{{ goHome }}">
+          <div style="{{ navDotStyleMuted }}"></div>
+          <div style="font-family:'Public Sans',sans-serif;font-size:10px;color:{{ theme.inkMuted }};">Home</div>
+        </div>
+        <div style="{{ navItemStyle }}" onclick="{{ goCart }}">
+          <div style="{{ navSquareStyleActive }}"></div>
+          <div style="font-family:'Public Sans',sans-serif;font-size:10px;color:{{ theme.ink }};">Cart</div>
+        </div>
+      </div>
+    </sc-if>
+
+    <sc-if value="{{ isConfirm }}" hint-placeholder-val="{{ false }}">
+      <div style="{{ panelPad }}">
+        <div style="display:flex;flex-direction:column;align-items:center;text-align:center;padding-top:36px;gap:10px;">
+          <div style="{{ checkCircleStyle }}"></div>
+          <div style="font-family:'Instrument Serif',serif;font-size:24px;color:{{ theme.ink }};margin-top:6px;">Order confirmed</div>
+          <div style="font-family:'Public Sans',sans-serif;font-size:13px;color:{{ theme.inkMuted }};">Order #{{ orderNumber }} · {{ deliverySummary }}</div>
+        </div>
+        <div style="display:flex;justify-content:space-between;margin-top:34px;padding:0 6px;">
+          <sc-for list="{{ statusSteps }}" as="step" hint-placeholder-count="4">
+            <div style="display:flex;flex-direction:column;align-items:center;gap:6px;flex:1;">
+              <div style="{{ step.dotStyle }}"></div>
+              <div style="font-family:'Public Sans',sans-serif;font-size:10px;color:{{ step.labelColor }};text-align:center;">{{ step.label }}</div>
+            </div>
+          </sc-for>
+        </div>
+        <button style="{{ primaryBtnStyle }};margin-top:40px;" onclick="{{ backToShop }}">Back to shop</button>
+      </div>
+    </sc-if>
+
+  </div>
+</x-import>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;:{&quot;width&quot;:340,&quot;height&quot;:760},&quot;theme&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;default&quot;:&quot;warm&quot;,&quot;options&quot;:[&quot;warm&quot;,&quot;cool&quot;,&quot;earthy&quot;],&quot;tsType&quot;:&quot;string&quot;},&quot;flow&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;default&quot;:&quot;standard&quot;,&quot;options&quot;:[&quot;standard&quot;,&quot;scheduled&quot;,&quot;cabincode&quot;],&quot;tsType&quot;:&quot;string&quot;}}">
+const THEMES = {
+  warm: { bg: 'oklch(0.97 0.012 95)', surface: '#ffffff', ink: 'oklch(0.24 0.015 90)', inkMuted: 'oklch(0.52 0.02 90)', accent: 'oklch(0.42 0.09 150)', accentSoft: 'oklch(0.93 0.03 150)', border: 'oklch(0.9 0.01 90)' },
+  cool: { bg: 'oklch(0.965 0.004 240)', surface: '#ffffff', ink: 'oklch(0.22 0.01 240)', inkMuted: 'oklch(0.52 0.015 240)', accent: 'oklch(0.38 0.08 255)', accentSoft: 'oklch(0.92 0.02 255)', border: 'oklch(0.89 0.008 240)' },
+  earthy: { bg: 'oklch(0.97 0.014 60)', surface: '#ffffff', ink: 'oklch(0.26 0.02 40)', inkMuted: 'oklch(0.54 0.025 45)', accent: 'oklch(0.53 0.12 40)', accentSoft: 'oklch(0.92 0.035 45)', border: 'oklch(0.9 0.015 50)' },
+};
+
+const PRODUCTS = [
+  { id: 'p1', cat: 'Food', name: 'Trail Mix', price: 6, desc: 'A hearty mix of nuts, dried fruit and chocolate — good fuel for a hike or a fireside snack.' },
+  { id: 'p2', cat: 'Food', name: 'Instant Oatmeal', price: 5, desc: 'Single-serve oats, ready in two minutes. Comes with maple and cinnamon packets.' },
+  { id: 'p3', cat: 'Food', name: 'Cabin Breakfast Kit', price: 14, desc: 'Eggs, bacon, bread and butter — everything for a slow morning at the cabin.' },
+  { id: 'p4', cat: 'Beverages', name: 'Local IPA 6-Pack', price: 15, desc: 'Cold, from a brewery twenty minutes down the road. Delivered chilled.' },
+  { id: 'p5', cat: 'Beverages', name: 'Cold Brew Coffee', price: 6, desc: 'Bottled cold brew, no fridge required until you open it.' },
+  { id: 'p6', cat: 'Beverages', name: 'Sparkling Water', price: 4, desc: '4-pack of sparkling water, lightly citrus.' },
+  { id: 'p7', cat: 'Firewood & Supplies', name: 'Firewood Bundle', price: 18, desc: 'Seasoned hardwood, enough for one full evening by the fire pit.' },
+  { id: 'p8', cat: 'Firewood & Supplies', name: 'Fire Starter Kit', price: 9, desc: 'Kindling, matches and starter cubes — everything but the wood.' },
+  { id: 'p9', cat: 'Firewood & Supplies', name: 'Propane Canister', price: 12, desc: 'Standard 1lb canister for the cabin stove or lantern.' },
+  { id: 'p10', cat: 'Local Goods', name: 'Maple Syrup', price: 11, desc: 'Small-batch, from a farm up the valley. Take a jar home.' },
+  { id: 'p11', cat: 'Local Goods', name: 'Honey Jar', price: 9, desc: 'Raw wildflower honey from a local apiary.' },
+  { id: 'p12', cat: 'Local Goods', name: 'Wool Socks', price: 16, desc: 'Thick hand-knit wool socks — cold-floor insurance.' },
+  { id: 'p13', cat: 'Toiletries', name: 'Travel Soap', price: 5, desc: 'Unscented bar soap in travel size.' },
+  { id: 'p14', cat: 'Toiletries', name: 'Sunscreen', price: 8, desc: 'SPF 30, broad spectrum, small enough for a daypack.' },
+  { id: 'p15', cat: 'Toiletries', name: 'Bug Spray', price: 7, desc: 'DEET-free repellent, effective through dusk.' },
+];
+
+class Component extends DCLogic {
+  state = {
+    screen: 'install',
+    activeCat: null,
+    selectedId: null,
+    cart: {},
+    qty: 1,
+    cabinNumber: this.props.flow === 'cabincode' ? '14' : '',
+    slotIdx: null,
+    orderNumber: null,
+  };
+
+  go(screen) { this.setState({ screen }); }
+
+  renderVals() {
+    const theme = THEMES[this.props.theme] || THEMES.warm;
+    const flow = this.props.flow || 'standard';
+    const s = this.state;
+
+    const money = (n) => '$' + n.toFixed(2);
+
+    const chipStyleBase = (active) => ({
+      fontFamily: "'Public Sans',sans-serif", fontSize: '12px', fontWeight: 600, whiteSpace: 'nowrap',
+      padding: '8px 14px', borderRadius: '999px', cursor: 'pointer', flexShrink: 0,
+      background: active ? theme.accent : theme.accentSoft,
+      color: active ? '#fff' : theme.ink,
+    });
+
+    const catNames = [...new Set(PRODUCTS.map(p => p.cat))];
+    const categories = catNames.map(name => ({
+      name,
+      chipStyle: chipStyleBase(s.activeCat === name),
+      onClick: () => this.setState({ activeCat: s.activeCat === name ? null : name }),
+    }));
+
+    const shown = s.activeCat ? PRODUCTS.filter(p => p.cat === s.activeCat) : PRODUCTS.slice(0, 6);
+    const sectionTitle = s.activeCat ? s.activeCat : 'Popular picks';
+
+    const cardStyle = { background: theme.surface, border: `1px solid ${theme.border}`, borderRadius: '14px', padding: '10px', cursor: 'pointer' };
+    const imgStyle = {
+      height: '78px', borderRadius: '10px', background: `repeating-linear-gradient(135deg, ${theme.accentSoft} 0 8px, ${theme.bg} 8px 16px)`,
+      display: 'flex', alignItems: 'center', justifyContent: 'center', textAlign: 'center', padding: '4px',
+    };
+    const addBtnStyle = { width: '22px', height: '22px', borderRadius: '999px', background: theme.accent, color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '14px', cursor: 'pointer', lineHeight: 1 };
+
+    const visibleProducts = shown.map(p => ({
+      ...p,
+      priceLabel: money(p.price),
+      cardStyle, imgStyle, addBtnStyle,
+      onOpen: () => this.setState({ selectedId: p.id, screen: 'product', qty: 1 }),
+      onQuickAdd: (e) => { e && e.stopPropagation && e.stopPropagation(); this.setState(st => ({ cart: { ...st.cart, [p.id]: (st.cart[p.id] || 0) + 1 } })); },
+    }));
+
+    const selectedProduct = PRODUCTS.find(p => p.id === s.selectedId) || PRODUCTS[0];
+
+    const cartEntries = Object.entries(s.cart).filter(([, q]) => q > 0);
+    const cartCount = cartEntries.reduce((sum, [, q]) => sum + q, 0);
+    const cartItems = cartEntries.map(([id, q]) => {
+      const p = PRODUCTS.find(pp => pp.id === id);
+      return {
+        id, name: p.name, lineLabel: `${q} × ${money(p.price)}`,
+        thumbStyle: { width: '44px', height: '44px', borderRadius: '10px', flexShrink: 0, background: `repeating-linear-gradient(135deg, ${theme.accentSoft} 0 6px, ${theme.bg} 6px 12px)` },
+        onRemove: () => this.setState(st => { const c = { ...st.cart }; delete c[id]; return { cart: c }; }),
+      };
+    });
+    const subtotal = cartEntries.reduce((sum, [id, q]) => sum + q * PRODUCTS.find(p => p.id === id).price, 0);
+
+    const timeSlotDefs = ['4–5 PM', '5–6 PM', '6–7 PM'];
+    const timeSlots = timeSlotDefs.map((label, i) => ({
+      label,
+      chipStyle: chipStyleBase(s.slotIdx === i),
+      onClick: () => this.setState({ slotIdx: i }),
+    }));
+
+    const primaryBtnStyle = { border: 'none', borderRadius: '999px', padding: '14px', width: '100%', background: theme.accent, color: '#fff', fontFamily: "'Public Sans',sans-serif", fontSize: '14px', fontWeight: 600, cursor: 'pointer' };
+    const ghostBtnStyle = { border: 'none', background: 'none', color: theme.inkMuted, fontFamily: "'Public Sans',sans-serif", fontSize: '13px', cursor: 'pointer', textDecoration: 'underline' };
+    const qtyBtnStyle = { width: '32px', height: '32px', borderRadius: '999px', border: `1px solid ${theme.border}`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '16px', color: theme.ink, cursor: 'pointer' };
+
+    const statusLabels = ['Received', 'Preparing', 'On the way', 'Delivered'];
+    const statusSteps = statusLabels.map((label, i) => ({
+      label,
+      labelColor: i <= 1 ? theme.ink : theme.inkMuted,
+      dotStyle: { width: '12px', height: '12px', borderRadius: '999px', background: i <= 1 ? theme.accent : theme.border },
+    }));
+
+    const deliverySummary = flow === 'cabincode' ? `Cabin ${s.cabinNumber}` : (flow === 'scheduled' ? `Cabin ${s.cabinNumber || '—'} · ${s.slotIdx != null ? timeSlotDefs[s.slotIdx] : 'window pending'}` : `Cabin ${s.cabinNumber || '—'}`);
+
+    return {
+      theme,
+      mountStyle: { width: '340px' },
+      screenStyle: { background: theme.bg, minHeight: '100%', animation: 'ph-fade 0.25s ease' },
+      panelPad: { padding: '18px 18px 0' },
+      appIconStyle: { width: '76px', height: '76px', borderRadius: '20px', background: theme.accent, color: '#fff', fontFamily: "'Instrument Serif',serif", fontSize: '34px', display: 'flex', alignItems: 'center', justifyContent: 'center' },
+      bulletDotStyle: { width: '6px', height: '6px', borderRadius: '999px', background: theme.accent, flexShrink: 0 },
+      primaryBtnStyle, ghostBtnStyle,
+      goInstallHome: () => this.go('home'),
+
+      isInstall: s.screen === 'install',
+      isHome: s.screen === 'home',
+      isProduct: s.screen === 'product',
+      isCart: s.screen === 'cart',
+      isConfirm: s.screen === 'confirm',
+
+      cabinPillStyle: { fontFamily: "'Public Sans',sans-serif", fontSize: '11px', fontWeight: 600, color: theme.accent, background: theme.accentSoft, borderRadius: '999px', padding: '6px 12px' },
+      cabinLabel: flow === 'cabincode' ? `Cabin ${s.cabinNumber}` : 'Set cabin →',
+      categories, sectionTitle, visibleProducts,
+
+      bottomNavStyle: { position: 'sticky', bottom: 0, display: 'flex', gap: '32px', justifyContent: 'center', padding: '12px 0 18px', background: theme.bg, borderTop: `1px solid ${theme.border}` },
+      navItemStyle: { display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '4px', cursor: 'pointer' },
+      navDotStyleHome: { width: '18px', height: '18px', borderRadius: '999px', background: theme.ink },
+      navDotStyleMuted: { width: '18px', height: '18px', borderRadius: '999px', border: `1.5px solid ${theme.inkMuted}` },
+      navSquareStyle: { width: '18px', height: '18px', borderRadius: '5px', border: `1.5px solid ${theme.inkMuted}` },
+      navSquareStyleActive: { width: '18px', height: '18px', borderRadius: '5px', background: theme.ink },
+      cartBadgeStyle: { position: 'absolute', top: '-6px', right: '-8px', background: theme.accent, color: '#fff', fontSize: '9px', fontFamily: "'Public Sans',sans-serif", borderRadius: '999px', minWidth: '14px', height: '14px', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '0 3px' },
+      hasCartItems: cartCount > 0,
+      cartCount,
+      goHome: () => this.go('home'),
+      goCart: () => this.go('cart'),
+
+      backRowStyle: { display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', paddingBottom: '14px' },
+      backArrowStyle: { width: '8px', height: '8px', borderLeft: `1.5px solid ${theme.inkMuted}`, borderBottom: `1.5px solid ${theme.inkMuted}`, transform: 'rotate(45deg)' },
+      productImgStyle: { height: '200px', borderRadius: '16px', background: `repeating-linear-gradient(135deg, ${theme.accentSoft} 0 10px, ${theme.bg} 10px 20px)`, display: 'flex', alignItems: 'center', justifyContent: 'center' },
+      selectedProduct: { ...selectedProduct, priceLabel: money(selectedProduct.price) },
+      qtyBtnStyle, qty: s.qty,
+      decQty: () => this.setState(st => ({ qty: Math.max(1, st.qty - 1) })),
+      incQty: () => this.setState(st => ({ qty: st.qty + 1 })),
+      addToCartLabel: `Add to cart — ${money(selectedProduct.price * s.qty)}`,
+      addToCart: () => this.setState(st => ({ cart: { ...st.cart, [selectedProduct.id]: (st.cart[selectedProduct.id] || 0) + st.qty }, screen: 'home' })),
+
+      cartItems, subtotalLabel: money(subtotal),
+      dividerStyle: { height: '1px', background: theme.border, margin: '16px 0' },
+      removeXStyle: { color: theme.inkMuted, cursor: 'pointer', fontSize: '16px', padding: '0 4px' },
+      showCabinInput: flow !== 'cabincode',
+      showCabinLocked: flow === 'cabincode',
+      showTimeSlots: flow === 'scheduled',
+      cabinNumber: s.cabinNumber,
+      onCabinChange: (e) => this.setState({ cabinNumber: e.target.value }),
+      cabinLockedStyle: { fontFamily: "'Public Sans',sans-serif", fontSize: '12px', color: theme.inkMuted, background: theme.accentSoft, borderRadius: '10px', padding: '10px 12px' },
+      inputStyle: { width: '100%', border: `1px solid ${theme.border}`, borderRadius: '10px', padding: '12px', fontFamily: "'Public Sans',sans-serif", fontSize: '13px', color: theme.ink, background: theme.surface, boxSizing: 'border-box' },
+      timeSlots,
+      checkout: () => this.setState({ screen: 'confirm', orderNumber: Math.floor(1000 + Math.random() * 9000) }),
+
+      checkCircleStyle: { width: '54px', height: '54px', borderRadius: '999px', border: `2px solid ${theme.accent}`, display: 'flex', alignItems: 'center', justifyContent: 'center' },
+      orderNumber: s.orderNumber, deliverySummary,
+      statusSteps,
+      backToShop: () => this.setState({ screen: 'home', cart: {}, activeCat: null }),
+    };
+  }
+}
+</script>
+</body>
+</html>
