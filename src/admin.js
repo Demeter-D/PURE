@@ -76,16 +76,83 @@ function renderGate() {
 
 function rowTemplate(p) {
   const id = p ? p.id : '';
+  const image = p && p.image ? p.image : '';
   return `
-    <div class="admin-row" data-id="${escapeHtml(id)}">
+    <div class="admin-row" data-id="${escapeHtml(id)}" data-image="${escapeHtml(image)}">
       ${id ? `<div class="admin-row-id">ID: ${escapeHtml(id)}</div>` : `<div class="admin-row-id">NEW PRODUCT — ID assigned on save</div>`}
-      <label>CATEGORY<input class="admin-field field-cat" value="${p ? escapeHtml(p.cat) : ''}" /></label>
-      <label>NAME<input class="admin-field field-name" value="${p ? escapeHtml(p.name) : ''}" /></label>
-      <label>PRICE (£)<input class="admin-field field-price" type="number" step="0.01" min="0" value="${p ? p.price : ''}" /></label>
-      <button type="button" class="admin-btn admin-btn--danger row-delete" title="Delete">×</button>
-      <label class="desc-field">DESCRIPTION<textarea class="admin-field field-desc">${p ? escapeHtml(p.desc) : ''}</textarea></label>
+      <div class="admin-row-body">
+        <div class="admin-photo-cell">
+          <div class="admin-photo-preview">${image ? `<img src="${escapeHtml(image)}" alt="" />` : ''}</div>
+          <input type="file" accept="image/jpeg,image/png,image/webp" class="field-photo-input" />
+          <div class="admin-photo-status"></div>
+        </div>
+        <div class="admin-row-fields">
+          <label>CATEGORY<input class="admin-field field-cat" value="${p ? escapeHtml(p.cat) : ''}" /></label>
+          <label>NAME<input class="admin-field field-name" value="${p ? escapeHtml(p.name) : ''}" /></label>
+          <label>PRICE (£)<input class="admin-field field-price" type="number" step="0.01" min="0" value="${p ? p.price : ''}" /></label>
+          <button type="button" class="admin-btn admin-btn--danger row-delete" title="Delete">×</button>
+          <label class="desc-field">DESCRIPTION<textarea class="admin-field field-desc">${p ? escapeHtml(p.desc) : ''}</textarea></label>
+        </div>
+      </div>
     </div>
   `;
+}
+
+async function resizeImage(file, maxDim = 1600, quality = 0.82) {
+  const dataUrl = await new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(reader.result);
+    reader.onerror = () => reject(new Error('Could not read the selected file'));
+    reader.readAsDataURL(file);
+  });
+  const img = await new Promise((resolve, reject) => {
+    const el = new Image();
+    el.onload = () => resolve(el);
+    el.onerror = () => reject(new Error('Could not read that image'));
+    el.src = dataUrl;
+  });
+  const scale = Math.min(1, maxDim / Math.max(img.width, img.height));
+  const w = Math.round(img.width * scale) || 1;
+  const h = Math.round(img.height * scale) || 1;
+  const canvas = document.createElement('canvas');
+  canvas.width = w;
+  canvas.height = h;
+  canvas.getContext('2d').drawImage(img, 0, 0, w, h);
+  return new Promise((resolve, reject) => {
+    canvas.toBlob((blob) => (blob ? resolve(blob) : reject(new Error('Could not process image'))), 'image/jpeg', quality);
+  });
+}
+
+async function uploadPhoto(row, file) {
+  const statusEl = row.querySelector('.admin-photo-status');
+  const input = row.querySelector('.field-photo-input');
+  statusEl.textContent = 'Uploading…';
+  input.disabled = true;
+  try {
+    const resized = await resizeImage(file);
+    const data = await adminFetch('/api/admin/upload', {
+      method: 'POST',
+      headers: { 'Content-Type': 'image/jpeg' },
+      body: resized,
+    });
+    row.dataset.image = data.url;
+    row.querySelector('.admin-photo-preview').innerHTML = `<img src="${escapeHtml(data.url)}" alt="" />`;
+    statusEl.textContent = '';
+  } catch (err) {
+    statusEl.textContent = err.message || 'Upload failed';
+  } finally {
+    input.disabled = false;
+    input.value = '';
+  }
+}
+
+function bindRowPhotoInputs() {
+  document.querySelectorAll('.field-photo-input').forEach((input) => {
+    input.onchange = () => {
+      const file = input.files[0];
+      if (file) uploadPhoto(input.closest('.admin-row'), file);
+    };
+  });
 }
 
 function renderApp() {
@@ -115,11 +182,13 @@ function renderApp() {
   document.getElementById('addBtn').addEventListener('click', () => {
     document.getElementById('rows').insertAdjacentHTML('beforeend', rowTemplate(null));
     bindRowDeletes();
+    bindRowPhotoInputs();
   });
 
   document.getElementById('saveBtn').addEventListener('click', saveProducts);
 
   bindRowDeletes();
+  bindRowPhotoInputs();
 }
 
 function bindRowDeletes() {
@@ -160,8 +229,9 @@ function collectProductsFromDom() {
       existingIds.add(id);
       row.dataset.id = id;
     }
+    const image = row.dataset.image || '';
 
-    products.push({ id, cat, name, price, desc });
+    products.push({ id, cat, name, price, desc, image });
   }
 
   if (products.length === 0) throw new Error('Add at least one product.');

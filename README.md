@@ -165,6 +165,23 @@ New products get an id auto-generated from their name; existing ids never
 change once created (that id is what's used in the cart and in Stripe line
 items, so don't hand-edit it).
 
+### Product photos
+
+Each row in `/admin` has a photo upload — pick a file and it replaces the
+striped placeholder everywhere (home grid, product detail, cart) once saved.
+Photos are stored in **Vercel Blob** (a separate one-time setup from Edge
+Config above, also just a few clicks):
+
+1. **Storage** tab → **Create Database** → **Blob** → name it (e.g.
+   `pure-photos`) → connect it to this project. This adds a
+   `BLOB_READ_WRITE_TOKEN` environment variable automatically — no extra
+   token or ID to copy this time.
+2. Redeploy.
+
+The browser resizes/compresses photos to a reasonable size before uploading
+(so a multi-MB phone photo doesn't hit upload limits or slow the shop down),
+and only JPEG/PNG/WebP are accepted, up to 8MB.
+
 ## Fulfilling orders
 
 Right now, `api/stripe-webhook.js` just logs new orders — there's no

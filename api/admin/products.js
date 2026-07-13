@@ -8,7 +8,8 @@ function isValidProduct(p) {
     typeof p.cat === 'string' && p.cat.trim() &&
     typeof p.name === 'string' && p.name.trim() &&
     typeof p.desc === 'string' &&
-    typeof p.price === 'number' && Number.isFinite(p.price) && p.price >= 0
+    typeof p.price === 'number' && Number.isFinite(p.price) && p.price >= 0 &&
+    (p.image === undefined || typeof p.image === 'string')
   );
 }
 

@@ -10,6 +10,7 @@
     "generate-icons": "node scripts/generate-icons.mjs"
   },
   "dependencies": {
+    "@vercel/blob": "^2.6.1",
     "@vercel/edge-config": "^1.4.0",
     "stripe": "^17.4.0"
   },

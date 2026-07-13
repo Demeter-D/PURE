@@ -94,7 +94,7 @@ function renderHome() {
 
   const cards = shown.map((p, i) => `
     <div class="product-card" data-action="open-product" data-id="${p.id}">
-      <div class="product-img ${i % 2 === 0 ? 'stripe-a' : 'stripe-b'}"></div>
+      <div class="product-img ${p.image ? '' : (i % 2 === 0 ? 'stripe-a' : 'stripe-b')}">${p.image ? `<img src="${escapeHtml(p.image)}" alt="" loading="lazy" />` : ''}</div>
       <div class="product-name">${escapeHtml(p.name)}</div>
       <div class="product-row">
         <div class="product-price">${money(p.price)}</div>
@@ -129,7 +129,7 @@ function renderProduct() {
     <div class="screen screen--light product-detail">
       <div class="panel">
         <button class="back-row" data-action="go-home">← BACK</button>
-        <div class="product-hero stripe-b"></div>
+        <div class="product-hero ${p.image ? '' : 'stripe-b'}">${p.image ? `<img src="${escapeHtml(p.image)}" alt="" />` : ''}</div>
         <div class="cat-label">${escapeHtml(p.cat)}</div>
         <div class="product-title">${escapeHtml(p.name)}</div>
         <div class="product-detail-price">${money(p.price)}</div>
@@ -169,7 +169,7 @@ function renderCart() {
     const p = findProduct(id);
     return `
       <div class="cart-row">
-        <div class="cart-thumb ${i % 2 === 0 ? 'stripe-a' : 'stripe-b'}"></div>
+        <div class="cart-thumb ${p.image ? '' : (i % 2 === 0 ? 'stripe-a' : 'stripe-b')}">${p.image ? `<img src="${escapeHtml(p.image)}" alt="" />` : ''}</div>
         <div style="flex:1;">
           <div class="cart-item-name">${escapeHtml(p.name)}</div>
           <div class="cart-item-line">${q} × ${money(p.price)}</div>
