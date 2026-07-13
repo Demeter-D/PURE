@@ -572,6 +572,33 @@ textarea.admin-field { resize: vertical; min-height: 40px; font-family: var(--mo
 .admin-banner--ok { border-color: var(--green); }
 .admin-actions { display: flex; gap: 10px; flex-wrap: wrap; }
 
+/* ---------- Cabin modal ---------- */
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(10, 10, 10, 0.6);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 20;
+  padding: 24px;
+}
+.modal-box {
+  background: var(--paper);
+  border: 3px solid var(--ink);
+  padding: 20px;
+  width: 100%;
+  max-width: 320px;
+}
+.modal-title {
+  font-family: var(--disp);
+  font-size: 16px;
+  color: var(--ink);
+  margin-bottom: 14px;
+}
+.modal-actions { margin-top: 14px; }
+.modal-actions .btn { padding: 14px; font-size: 14px; margin-top: 0; }
+
 /* ---------- Toast / loading ---------- */
 .toast {
   position: fixed;

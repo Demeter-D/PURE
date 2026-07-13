@@ -18,6 +18,7 @@ const state = {
   orderMeta: null,
   loading: false,
   error: null,
+  cabinModalOpen: false,
 };
 
 let deferredInstallPrompt = null;
@@ -25,6 +26,19 @@ window.addEventListener('beforeinstallprompt', (e) => {
   e.preventDefault();
   deferredInstallPrompt = e;
 });
+
+const isIOS = /iphone|ipad|ipod/i.test(navigator.userAgent);
+const isStandalone =
+  window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true;
+
+function showToast(text, ms = 4500) {
+  document.querySelectorAll('.toast').forEach((el) => el.remove());
+  const el = document.createElement('div');
+  el.className = 'toast';
+  el.textContent = text;
+  document.body.appendChild(el);
+  setTimeout(() => el.remove(), ms);
+}
 
 const app = document.getElementById('app');
 
@@ -107,7 +121,7 @@ function renderHome() {
     <div class="screen screen--light">
       <div class="top-bar">
         <div class="wordmark">PURE</div>
-        <button class="cabin-tag" data-action="focus-cabin">${state.cabinName ? 'CABIN ' + escapeHtml(state.cabinName) : 'SET CABIN →'}</button>
+        <button class="cabin-tag" data-action="open-cabin-modal">${state.cabinName ? 'CABIN ' + escapeHtml(state.cabinName) : 'SET CABIN →'}</button>
       </div>
       <div class="home-body">
         <div class="eyebrow">CATEGORIES</div>
@@ -238,15 +252,33 @@ function renderConfirm() {
   `;
 }
 
+function renderCabinModal() {
+  if (!state.cabinModalOpen) return '';
+  return `
+    <div class="modal-overlay" data-action="close-cabin-modal">
+      <div class="modal-box">
+        <div class="modal-title">SET CABIN NAME</div>
+        <input id="cabinModalInput" class="cabin-input" placeholder="CABIN NAME" value="${escapeHtml(state.cabinName)}" />
+        <div class="modal-actions">
+          <button class="btn btn--black" data-action="save-cabin-modal">SAVE</button>
+        </div>
+      </div>
+    </div>
+  `;
+}
+
 function render() {
+  let screenHtml;
   switch (state.screen) {
-    case 'install': app.innerHTML = renderInstall(); break;
-    case 'product': app.innerHTML = renderProduct(); break;
-    case 'cart': app.innerHTML = renderCart(); break;
-    case 'confirm': app.innerHTML = renderConfirm(); break;
+    case 'install': screenHtml = renderInstall(); break;
+    case 'product': screenHtml = renderProduct(); break;
+    case 'cart': screenHtml = renderCart(); break;
+    case 'confirm': screenHtml = renderConfirm(); break;
     case 'home':
-    default: app.innerHTML = renderHome(); break;
+    default: screenHtml = renderHome(); break;
   }
+  app.innerHTML = screenHtml + renderCabinModal();
+
   if (state.screen === 'cart') {
     const input = document.getElementById('cabinInput');
     if (input) {
@@ -254,6 +286,14 @@ function render() {
         state.cabinName = e.target.value;
         savePersisted();
       });
+    }
+  }
+
+  if (state.cabinModalOpen) {
+    const modalInput = document.getElementById('cabinModalInput');
+    if (modalInput) {
+      modalInput.focus();
+      modalInput.select();
     }
   }
 }
@@ -309,6 +349,12 @@ app.addEventListener('click', (e) => {
       if (deferredInstallPrompt) {
         deferredInstallPrompt.prompt();
         deferredInstallPrompt.userChoice.finally(() => { deferredInstallPrompt = null; });
+      } else if (!isStandalone) {
+        showToast(
+          isIOS
+            ? 'Tap the Share icon, then "Add to Home Screen".'
+            : 'Use your browser’s menu to add this app to your home screen.'
+        );
       }
       go('home');
       break;
@@ -319,7 +365,19 @@ app.addEventListener('click', (e) => {
       break;
     case 'go-home': go('home'); break;
     case 'go-cart': go('cart'); break;
-    case 'focus-cabin': go('cart'); break;
+    case 'open-cabin-modal':
+      setState({ cabinModalOpen: true });
+      break;
+    case 'close-cabin-modal':
+      if (e.target === el) setState({ cabinModalOpen: false });
+      break;
+    case 'save-cabin-modal': {
+      const modalInput = document.getElementById('cabinModalInput');
+      state.cabinName = modalInput ? modalInput.value.trim() : state.cabinName;
+      savePersisted();
+      setState({ cabinModalOpen: false });
+      break;
+    }
     case 'filter-cat':
       setState({ activeCat: state.activeCat === el.dataset.cat ? null : el.dataset.cat });
       break;
