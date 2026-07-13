@@ -1,0 +1,17 @@
+[
+  { "id": "p1", "cat": "FOOD", "name": "TRAIL MIX", "price": 6, "desc": "A hearty mix of nuts, dried fruit and chocolate — good fuel for a hike or a fireside snack." },
+  { "id": "p2", "cat": "FOOD", "name": "INSTANT OATMEAL", "price": 5, "desc": "Single-serve oats, ready in two minutes. Comes with maple and cinnamon packets." },
+  { "id": "p3", "cat": "FOOD", "name": "BREAKFAST KIT", "price": 14, "desc": "Eggs, bacon, bread and butter — everything for a slow morning at the cabin." },
+  { "id": "p4", "cat": "BEVERAGES", "name": "LOCAL IPA 6-PACK", "price": 15, "desc": "Cold, from a brewery twenty minutes down the road. Delivered chilled." },
+  { "id": "p5", "cat": "BEVERAGES", "name": "COLD BREW COFFEE", "price": 6, "desc": "Bottled cold brew, no fridge required until you open it." },
+  { "id": "p6", "cat": "BEVERAGES", "name": "SPARKLING WATER", "price": 4, "desc": "4-pack of sparkling water, lightly citrus." },
+  { "id": "p7", "cat": "FIREWOOD", "name": "FIREWOOD BUNDLE", "price": 18, "desc": "Seasoned hardwood, enough for one full evening by the fire pit." },
+  { "id": "p8", "cat": "FIREWOOD", "name": "FIRE STARTER KIT", "price": 9, "desc": "Kindling, matches and starter cubes — everything but the wood." },
+  { "id": "p9", "cat": "FIREWOOD", "name": "PROPANE CANISTER", "price": 12, "desc": "Standard 1lb canister for the cabin stove or lantern." },
+  { "id": "p10", "cat": "LOCAL GOODS", "name": "MAPLE SYRUP", "price": 11, "desc": "Small-batch, from a farm up the valley. Take a jar home." },
+  { "id": "p11", "cat": "LOCAL GOODS", "name": "HONEY JAR", "price": 9, "desc": "Raw wildflower honey from a local apiary." },
+  { "id": "p12", "cat": "LOCAL GOODS", "name": "WOOL SOCKS", "price": 16, "desc": "Thick hand-knit wool socks — cold-floor insurance." },
+  { "id": "p13", "cat": "TOILETRIES", "name": "TRAVEL SOAP", "price": 5, "desc": "Unscented bar soap in travel size." },
+  { "id": "p14", "cat": "TOILETRIES", "name": "SUNSCREEN", "price": 8, "desc": "SPF 30, broad spectrum, small enough for a daypack." },
+  { "id": "p15", "cat": "TOILETRIES", "name": "BUG SPRAY", "price": 7, "desc": "DEET-free repellent, effective through dusk." }
+]
