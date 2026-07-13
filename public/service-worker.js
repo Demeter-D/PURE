@@ -1,10 +1,10 @@
-// Minimal offline-shell service worker.
-// Precaches the static shell on install, serves cache-first, falls back to network.
-// Built JS/CSS bundles are content-hashed by Vite, so they're cached at runtime
-// on first fetch instead of being precached by name here.
-// Bump CACHE_NAME whenever you ship a new deploy so old caches get cleared.
+// Offline-shell service worker.
+// Page navigations (the HTML) go network-first, so a new deploy shows up on
+// the very next load instead of waiting for a manual cache-version bump.
+// Static assets (Vite's content-hashed JS/CSS, icons) are cache-first, which
+// is safe since their filenames change whenever their content does.
 
-const CACHE_NAME = 'pure-shell-v1';
+const CACHE_NAME = 'pure-shell-v2';
 const APP_SHELL = [
   '/',
   '/index.html',
@@ -28,16 +28,33 @@ self.addEventListener('activate', (event) => {
 });
 
 self.addEventListener('fetch', (event) => {
+  const { request } = event;
+
   // Never cache API/checkout calls — always go to network for those.
-  if (event.request.url.includes('/api/')) return;
-  if (event.request.method !== 'GET') return;
+  if (request.url.includes('/api/')) return;
+  if (request.method !== 'GET') return;
+
+  if (request.mode === 'navigate') {
+    event.respondWith(
+      fetch(request)
+        .then((response) => {
+          if (response.ok) {
+            const copy = response.clone();
+            caches.open(CACHE_NAME).then((cache) => cache.put(request, copy));
+          }
+          return response;
+        })
+        .catch(() => caches.match(request).then((cached) => cached || caches.match('/index.html')))
+    );
+    return;
+  }
 
   event.respondWith(
-    caches.match(event.request).then((cached) => {
-      return cached || fetch(event.request).then((response) => {
+    caches.match(request).then((cached) => {
+      return cached || fetch(request).then((response) => {
         if (response.ok) {
           const copy = response.clone();
-          caches.open(CACHE_NAME).then((cache) => cache.put(event.request, copy));
+          caches.open(CACHE_NAME).then((cache) => cache.put(request, copy));
         }
         return response;
       }).catch(() => cached);
