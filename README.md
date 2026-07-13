@@ -12,18 +12,25 @@ for payment, deployed as a static site + serverless functions on Vercel.
 ## Project layout
 
 ```
-index.html                        entry HTML
+index.html                        shop entry HTML
+admin.html                        admin entry HTML (product catalog editor)
 src/
-  main.js                         app state machine + rendering (all 5 screens)
-  style.css                       design tokens + component styles
-  products.js, cart.js            product lookup, cart localStorage persistence
-shared/products.json              single source of truth for product data —
-                                   imported by both the client and the API
+  main.js                         shop state machine + rendering (all 5 screens)
+  admin.js                        admin page: password gate + editable product table
+  style.css                       design tokens + component styles (shared by both)
+  products.js, cart.js            product fetch/lookup, cart localStorage persistence
+shared/products.json              bundled fallback catalog (used until Edge Config
+                                   is set up, and by local dev without it)
 api/
+  products.js                    GET  — public product list (shop reads this)
   create-checkout-session.js      POST — creates a Stripe Checkout Session
   stripe-webhook.js               POST — verifies + handles checkout.session.completed
   session.js                      GET  — looks up a session for the confirmation screen
-  _lib/products.js                server-side price lookup (never trusts the client)
+  admin/login.js                  POST — validates the admin password
+  admin/products.js               GET/PUT — password-gated catalog read/write
+  _lib/catalogStore.js            reads/writes the catalog (Edge Config, with the
+                                   bundled JSON as fallback)
+  _lib/adminAuth.js                shared password check for the admin/* routes
 public/
   manifest.json, service-worker.js, icons/   PWA shell (icons are placeholders — see below)
 design_handoff_pure_cabin_shop/   original design spec, kept for reference
@@ -58,7 +65,7 @@ localhost:3000/api/stripe-webhook` (use whatever port `vercel dev` prints).
 
 1. Cart screen posts `{ items, cabinName, deliverySlot }` to
    `/api/create-checkout-session`.
-2. The function looks up real prices from `shared/products.json` server-side
+2. The function looks up real prices from the catalog store server-side
    (never trusts client-sent prices), creates a Stripe Checkout Session with
    `cabinName`/`deliverySlot` as `metadata`, and returns the session URL.
 3. The browser redirects to Stripe's hosted checkout page.
@@ -121,6 +128,42 @@ Flip Stripe from **Test mode** to **Live mode** (top right of the dashboard),
 grab the live `STRIPE_SECRET_KEY`, and update it (and re-create the webhook
 endpoint in live mode, updating `STRIPE_WEBHOOK_SECRET`) in Vercel's
 environment variables, then redeploy.
+
+## Editing the product catalog
+
+There's a password-protected admin page at `/admin` for adding, editing, and
+deleting products without touching code — changes go live immediately, no
+redeploy needed. It reads/writes the catalog through a **Vercel Edge Config**
+store (a small key-value store built for exactly this: read constantly,
+written rarely). Until Edge Config is set up, the app just runs on the
+bundled `shared/products.json` and the admin page's save button will show a
+clear error explaining it's not configured yet.
+
+**One-time setup, all in the Vercel dashboard:**
+
+1. **Create the store**: your project → **Storage** tab → **Create Database**
+   → **Edge Config** → give it a name (e.g. `pure-products`) → connect it to
+   this project. This automatically adds an `EDGE_CONFIG` environment
+   variable to the project (used for *reads*).
+2. **Get an API token for writes**: Edge Config reads use that connection
+   string, but writes need a Vercel API token. Go to **Account Settings →
+   Tokens → Create Token** (any name, e.g. "pure-admin"), copy it.
+3. **Get the Edge Config ID**: on the Edge Config store's page in the
+   dashboard, copy its **ID** (starts with `ecfg_`).
+4. **If your project is under a Team** (not your personal account — check the
+   dashboard URL/scope), also grab the **Team ID** from **Team Settings →
+   General**.
+5. Add these env vars (`vercel env add <NAME> production`, or via the
+   dashboard), then redeploy:
+   - `ADMIN_PASSWORD` — a password you choose for `/admin`
+   - `VERCEL_API_TOKEN` — the token from step 2
+   - `EDGE_CONFIG_ID` — the ID from step 3
+   - `VERCEL_TEAM_ID` — only if step 4 applied to you
+
+Then open `https://<your-site>/admin`, enter the password, and edit away.
+New products get an id auto-generated from their name; existing ids never
+change once created (that id is what's used in the cart and in Stripe line
+items, so don't hand-edit it).
 
 ## Fulfilling orders
 

@@ -458,6 +458,94 @@ button, input {
 .status-label--done { color: var(--ink); }
 .confirm .btn { margin-top: 36px; margin-bottom: 24px; }
 
+/* ---------- Admin ---------- */
+#admin-app {
+  max-width: 960px;
+  margin: 0 auto;
+  min-height: 100vh;
+  padding: 24px 18px 60px;
+}
+.admin-gate {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  text-align: center;
+  padding: 24px;
+}
+.admin-gate .wordmark-big { color: var(--ink); font-size: 32px; }
+.admin-gate form { display: flex; flex-direction: column; gap: 12px; width: 100%; max-width: 320px; }
+.admin-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 20px;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+.admin-title { font-family: var(--disp); font-size: 24px; }
+.admin-btn {
+  appearance: none;
+  -webkit-appearance: none;
+  border: 2px solid var(--ink);
+  background: #fff;
+  color: var(--ink);
+  font-family: var(--mono);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  padding: 10px 14px;
+  cursor: pointer;
+  border-radius: 0;
+}
+.admin-btn--primary { background: var(--ink); color: #fff; }
+.admin-btn--danger { border-color: #B00020; color: #B00020; background: #fff; }
+.admin-btn:disabled { opacity: 0.5; cursor: default; }
+.admin-table { display: flex; flex-direction: column; gap: 10px; margin-bottom: 20px; }
+.admin-row {
+  border: 2px solid var(--ink);
+  background: #fff;
+  padding: 12px;
+  display: grid;
+  grid-template-columns: 1fr 1fr 100px 40px;
+  gap: 8px;
+  align-items: start;
+}
+.admin-row .desc-field { grid-column: 1 / -1; }
+.admin-row label {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-family: var(--mono);
+  font-size: 9px;
+  letter-spacing: 0.08em;
+  color: var(--muted-3);
+}
+.admin-field {
+  border: 2px solid var(--ink);
+  padding: 8px;
+  font-family: var(--mono);
+  font-size: 12px;
+  color: var(--ink);
+  background: #fff;
+  width: 100%;
+}
+textarea.admin-field { resize: vertical; min-height: 40px; font-family: var(--mono); }
+.admin-row-id { font-family: var(--mono); font-size: 9px; color: var(--muted-4); grid-column: 1 / -1; }
+.admin-banner {
+  font-family: var(--mono);
+  font-size: 12px;
+  padding: 10px 12px;
+  margin-bottom: 16px;
+  border: 2px solid var(--ink);
+}
+.admin-banner--error { border-color: #B00020; color: #B00020; }
+.admin-banner--ok { border-color: var(--green); }
+.admin-actions { display: flex; gap: 10px; flex-wrap: wrap; }
+
 /* ---------- Toast / loading ---------- */
 .toast {
   position: fixed;

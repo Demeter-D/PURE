@@ -4,7 +4,7 @@
 // returns the session URL for the browser to redirect to.
 
 import Stripe from 'stripe';
-import { findProduct } from './_lib/products.js';
+import { getProducts } from './_lib/catalogStore.js';
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
 
@@ -29,6 +29,9 @@ export default async function handler(req, res) {
     if (items.length > 50) {
       return res.status(400).json({ error: 'Too many line items' });
     }
+
+    const catalog = await getProducts();
+    const findProduct = (id) => catalog.find((p) => p.id === id);
 
     const line_items = items.map(({ id, qty }) => {
       const product = findProduct(id);

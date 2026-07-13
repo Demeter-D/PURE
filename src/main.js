@@ -1,5 +1,5 @@
 import './style.css';
-import products, { findProduct, categories } from './products.js';
+import { loadProducts, getProducts, findProduct, categories } from './products.js';
 import { loadPersisted, persist, clearPersisted } from './cart.js';
 
 const INTRO_SEEN_KEY = 'pure_intro_seen_v1';
@@ -83,6 +83,7 @@ function renderInstall() {
 
 function renderHome() {
   const cats = categories();
+  const products = getProducts();
   const shown = state.activeCat ? products.filter((p) => p.cat === state.activeCat) : products.slice(0, 6);
   const sectionTitle = state.activeCat || 'POPULAR PICKS';
   const count = cartCount();
@@ -123,7 +124,7 @@ function renderHome() {
 }
 
 function renderProduct() {
-  const p = findProduct(state.selectedId) || products[0];
+  const p = findProduct(state.selectedId) || getProducts()[0];
   return `
     <div class="screen screen--light product-detail">
       <div class="panel">
@@ -415,6 +416,19 @@ if ('serviceWorker' in navigator) {
   });
 }
 
-hydrateFromStripeRedirect().then((handled) => {
+async function boot() {
+  try {
+    await loadProducts();
+  } catch {
+    app.innerHTML = `
+      <div class="screen screen--light" style="align-items:center;justify-content:center;text-align:center;padding:40px;">
+        <div class="empty-cart">COULD NOT LOAD THE SHOP.<br />CHECK YOUR CONNECTION AND RELOAD.</div>
+      </div>
+    `;
+    return;
+  }
+  const handled = await hydrateFromStripeRedirect();
   if (!handled) render();
-});
+}
+
+boot();
