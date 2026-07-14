@@ -395,6 +395,10 @@ function renderApp() {
         container.insertAdjacentHTML('beforeend', rowTemplate(null));
         bindRowDeletes();
         bindRowPhotoInputs();
+        const rows = container.querySelectorAll('.admin-row');
+        const newRow = rows[rows.length - 1];
+        newRow.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        newRow.querySelector('.field-name')?.focus();
       });
     }
     const saveBtn = document.getElementById('saveBtn');
