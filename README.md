@@ -99,21 +99,23 @@ swap in real photos per product when you have them.
 
 ## Deploying to Vercel
 
-1. Push this repo to GitHub (already done if you're reading this from the
-   deployed branch).
-2. Go to [vercel.com](https://vercel.com) → **Add New... → Project** → import
-   the repo. Vercel auto-detects the Vite framework preset — no config needed.
-3. Before the first deploy (or any time after, then redeploy), add environment
-   variables under **Project Settings → Environment Variables**:
-   - `STRIPE_SECRET_KEY`
-   - `STRIPE_WEBHOOK_SECRET`
-   - `SITE_URL` — your Vercel URL, e.g. `https://pure-cabin-shop.vercel.app`
-     (optional — the API falls back to the request's own host if unset)
-4. Deploy. You'll get a live HTTPS URL.
-5. In the Stripe Dashboard → **Developers → Webhooks**, add an endpoint at
-   `https://<your-site>/api/stripe-webhook`, subscribed to
-   `checkout.session.completed`. Copy the signing secret it gives you into
-   `STRIPE_WEBHOOK_SECRET` (step 3), then redeploy.
+This project is connected to Vercel via **Project Settings → Git**, with
+`main` as the production branch — every push to `main` deploys automatically.
+Environment variables live under **Project Settings → Environment
+Variables** and don't need to be re-added on each deploy:
+- `STRIPE_SECRET_KEY`
+- `STRIPE_WEBHOOK_SECRET`
+- `SITE_URL` — your Vercel URL, e.g. `https://pure-cabin-shop.vercel.app`
+  (optional — the API falls back to the request's own host if unset)
+
+For the Stripe webhook: Stripe Dashboard → **Developers → Webhooks** → add an
+endpoint at `https://<your-site>/api/stripe-webhook`, subscribed to
+`checkout.session.completed`. Its signing secret goes into
+`STRIPE_WEBHOOK_SECRET` above.
+
+If you ever need to deploy from a local checkout instead (e.g. before pushing
+to GitHub), `npx vercel --prod` still works, but prefer pushing to `main` —
+mixing the two can leave the live site out of sync with what's on GitHub.
 
 ## Testing before going live
 
