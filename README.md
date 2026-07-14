@@ -9,6 +9,28 @@ direction, `ShopPhoneBrutalist.dc.html`).
 Stack: vanilla JS + Vite (no framework needed for five screens), Stripe Checkout
 for payment, deployed as a static site + serverless functions on Vercel.
 
+## PURE × Stockley collaboration
+
+The app currently ships a co-branded look for a collaboration with Stockley
+Farm. Palette and typography are defined in `src/style.css` `:root`:
+
+- **Ink** `#1F1A14`, **Hearth/paper** `#F5EDD9`, **Ember/accent** `#A8552A`
+  (CSS variable kept as `--green` for a minimal diff, but it's Ember now, not
+  green), **Moss** `#3A4A36` — all Stockley's own named brand tokens.
+- Display/mono stay PURE's originals — Archivo Black and Space Mono — used
+  for everything. The one exception is the literal word "Stockley" wherever
+  it appears in a wordmark or signature line, which uses `--stockley-mark`
+  (EB Garamond italic) — see `.lockup`/`.stockley-word` in `src/style.css`
+  and the three places it's used in `src/main.js` (install screen, home top
+  bar, order-confirmed screen).
+
+To revert to the original solo-PURE black/green look, restore `--ink:
+#0A0A0A`, `--paper: oklch(0.965 0.004 235)`, `--green: oklch(0.64 0.18
+142)` in `src/style.css`, drop the `--stockley-mark`/`.lockup` additions,
+and remove the "× Stockley" markup from the three spots in `src/main.js`
+listed above — plus regenerate the icons/OG image (`npm run generate-icons`,
+and re-run `favicon-template.html`/`og-template.html` with the old colors).
+
 ## Project layout
 
 ```
@@ -89,12 +111,13 @@ localhost:3000/api/stripe-webhook` (use whatever port `vercel dev` prints).
 The browser-tab favicon (`public/icons/favicon-{16,32,48}.png`,
 `apple-touch-icon.png`) and the social-share preview image
 (`public/og-image.png`, linked via the `og:image`/`twitter:image` tags in
-`index.html`) are a bold "P" monogram / "PURE" wordmark on the brand
-black-and-green, rendered from `favicon-template.html`/`og-template.html`
-(one-off HTML files used to generate these, not part of the shipped site).
+`index.html`) are a bold "P" monogram / "PURE × Stockley" lockup on the
+Ink/Ember palette (see "PURE × Stockley collaboration" below), rendered from
+`favicon-template.html`/`og-template.html` (one-off HTML files used to
+generate these, not part of the shipped site).
 
 Separately, `scripts/generate-icons.mjs` generates the *PWA install* icons
-(black square, centered accent-green square) using nothing but Node's
+(Ink square, centered Ember square) using nothing but Node's
 built-in `zlib` — no image library needed. Run `npm run generate-icons` to
 regenerate them. Before a real launch, consider replacing
 `public/icons/icon-{192,512,maskable-512}.png` with matching artwork built

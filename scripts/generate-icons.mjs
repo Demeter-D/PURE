@@ -1,4 +1,4 @@
-// Generates placeholder PWA icons (black background, centered accent-green square)
+// Generates placeholder PWA icons (ink background, centered Ember square)
 // using only Node's built-in zlib — no image library dependency required.
 // Replace these with real product/brand photography before launch (see README).
 
@@ -11,8 +11,8 @@ const __dirname = dirname(fileURLToPath(import.meta.url));
 const outDir = join(__dirname, '..', 'public', 'icons');
 mkdirSync(outDir, { recursive: true });
 
-const INK = [10, 10, 10];
-const GREEN = [111, 176, 84]; // sRGB approximation of oklch(0.64 0.18 142)
+const INK = [31, 26, 20];   // #1F1A14
+const GREEN = [168, 85, 42]; // #A8552A — Stockley "Ember"
 
 function crc32(buf) {
   let c;

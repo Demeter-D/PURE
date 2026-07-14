@@ -112,11 +112,11 @@ const STATUS_STEPS = [
 function renderInstall() {
   return `
     <div class="screen screen--dark install-wrap">
-      <div class="wordmark-big">PURE</div>
-      <div class="mono-tag">ALL NATURAL</div>
+      <div class="wordmark-big lockup">PURE<span class="lockup-x">×</span><span class="stockley-word">Stockley</span></div>
+      <div class="mono-tag">A FARM COLLABORATION</div>
       <div class="install-benefits">
-        <div class="install-benefit"><div class="sq-bullet"></div><div class="benefit-text">ORDER SNACKS, DRINKS &amp; SUPPLIES TO YOUR CABIN</div></div>
-        <div class="install-benefit"><div class="sq-bullet"></div><div class="benefit-text">TRACK YOUR ORDER IN REAL TIME</div></div>
+        <div class="install-benefit"><div class="sq-bullet"></div><div class="benefit-text">FARM GOODS &amp; FIRESIDE SUPPLIES, BROUGHT TO YOUR DOOR</div></div>
+        <div class="install-benefit"><div class="sq-bullet"></div><div class="benefit-text">TRACK YOUR ORDER AS IT CROSSES THE VALLEY</div></div>
         <div class="install-benefit"><div class="sq-bullet"></div><div class="benefit-text">SECURE CHECKOUT — STRIPE</div></div>
       </div>
       <button class="btn btn--green" data-action="install">INSTALL APP</button>
@@ -150,7 +150,7 @@ function renderHome() {
   return `
     <div class="screen screen--light">
       <div class="top-bar">
-        <div class="wordmark">PURE</div>
+        <div class="wordmark lockup">PURE<span class="lockup-x">×</span><span class="stockley-word">Stockley</span></div>
         <button class="cabin-tag" data-action="open-cabin-modal">${state.cabinName ? 'CABIN ' + escapeHtml(state.cabinName) : 'SET CABIN →'}</button>
       </div>
       <div class="home-body">
@@ -275,6 +275,7 @@ function renderConfirm() {
           </div>
           <div class="confirm-title">ORDER CONFIRMED</div>
           <div class="confirm-meta">ORDER #${escapeHtml(state.orderNumber || '—')} — ${deliverySummary}</div>
+          <div class="confirm-thanks">With thanks, from <span class="stockley-word stockley-word--dark">Stockley</span> Farm</div>
         </div>
         <div class="status-row">${steps}</div>
         <button class="btn btn--black" data-action="back-to-shop">BACK TO SHOP</button>

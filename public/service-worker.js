@@ -4,7 +4,7 @@
 // Static assets (Vite's content-hashed JS/CSS, icons) are cache-first, which
 // is safe since their filenames change whenever their content does.
 
-const CACHE_NAME = 'pure-shell-v2';
+const CACHE_NAME = 'pure-shell-v3';
 const APP_SHELL = [
   '/',
   '/index.html',
