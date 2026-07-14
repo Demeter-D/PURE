@@ -6,6 +6,7 @@
 import Stripe from 'stripe';
 import { saveOrder } from './_lib/orderStore.js';
 import { notifySlack } from './_lib/slack.js';
+import { sendOrderConfirmationEmail } from './_lib/email.js';
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
 const endpointSecret = process.env.STRIPE_WEBHOOK_SECRET;
@@ -50,7 +51,7 @@ export default async function handler(req, res) {
     let items = [];
     try {
       const lineItems = await stripe.checkout.sessions.listLineItems(session.id, { limit: 100 });
-      items = lineItems.data.map((li) => ({ name: li.description, qty: li.quantity }));
+      items = lineItems.data.map((li) => ({ name: li.description, qty: li.quantity, amount: li.amount_total }));
     } catch (err) {
       console.error('Could not fetch line items for', session.id, err);
     }
@@ -73,6 +74,9 @@ export default async function handler(req, res) {
     }
 
     await notifySlack(order);
+
+    const guestEmail = session.customer_details?.email || session.customer_email || '';
+    await sendOrderConfirmationEmail(order, guestEmail);
   }
 
   return res.status(200).json({ received: true });

@@ -35,6 +35,7 @@ api/
                                    bundled JSON as fallback)
   _lib/orderStore.js              reads/writes orders (Redis)
   _lib/slack.js                   posts new-order notifications to Slack, if configured
+  _lib/email.js                   sends the branded order confirmation email, if configured
   _lib/adminAuth.js                shared password check for the admin/* routes
 public/
   manifest.json, service-worker.js, icons/   PWA shell (icons are placeholders — see below)
@@ -224,3 +225,34 @@ this needs its own store):
 Without `SLACK_WEBHOOK_URL` set, everything else still works — you just won't
 get a Slack ping, and would need to check `/admin`'s Orders tab or the Stripe
 Dashboard's Payments list manually.
+
+## Order confirmation email
+
+Separately from Stripe's own generic receipt (a Dashboard toggle — Settings →
+Emails → "Email customers for successful payments" — no code involved), the
+webhook also sends a PURE-branded confirmation email (itemized order, total,
+delivery window, a thank-you note) to the guest via
+[Resend](https://resend.com). No VAT line is shown — PURE isn't currently
+VAT-registered; if that changes later, this is the file to revisit
+(`api/_lib/email.js`).
+
+1. Sign up at resend.com (free tier is plenty for this scale) → **API Keys**
+   → **Create API Key** → copy it.
+2. Add it and redeploy:
+   ```
+   npx vercel env add RESEND_API_KEY production
+   ```
+
+That's enough to start sending — by default it sends from Resend's shared
+`onboarding@resend.dev` address, which works immediately with no extra setup
+but looks less trustworthy to guests and has stricter sending limits. Once
+you own a domain for PURE, verify it in Resend (**Domains** → **Add Domain**,
+then add the DNS records it gives you) and set:
+```
+npx vercel env add EMAIL_FROM production
+```
+with a value like `PURE <orders@yourdomain.com>`.
+
+Without `RESEND_API_KEY` set, everything else still works — guests just won't
+get the branded email (Stripe's own receipt toggle, if enabled, still applies
+independently).

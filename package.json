@@ -13,6 +13,7 @@
     "@vercel/blob": "^2.6.1",
     "@vercel/edge-config": "^1.4.0",
     "ioredis": "^5.4.2",
+    "resend": "^4.0.1",
     "stripe": "^17.4.0"
   },
   "devDependencies": {
