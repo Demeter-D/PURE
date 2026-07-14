@@ -203,6 +203,17 @@ New products get an id auto-generated from their name; existing ids never
 change once created (that id is what's used in the cart and in Stripe line
 items, so don't hand-edit it).
 
+### Categories
+
+The **Categories** tab in `/admin` manages the shop's categories as their own
+list, separate from products. Each category has a stable id (assigned once,
+never changes) and a display name (freely editable) — so renaming a category
+is just editing its name and hitting save; every product in it updates
+everywhere (chips, product page, admin grouping) immediately, no need to
+touch each product individually. A category can't be deleted while products
+still use it — reassign those products first in the Products tab, which now
+groups rows under their category.
+
 ### Product photos
 
 Each row in `/admin` has a photo upload — pick a file and it replaces the

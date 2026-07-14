@@ -1,5 +1,5 @@
 import './style.css';
-import { loadProducts, getProducts, findProduct, categories } from './products.js';
+import { loadProducts, getProducts, findProduct, getCategories, getCategoryName } from './products.js';
 import { loadPersisted, persist, clearPersisted } from './cart.js';
 
 const INTRO_SEEN_KEY = 'pure_intro_seen_v1';
@@ -8,7 +8,7 @@ const persisted = loadPersisted();
 
 const state = {
   screen: localStorage.getItem(INTRO_SEEN_KEY) ? 'home' : 'install',
-  activeCat: null,
+  activeCatId: null,
   selectedId: null,
   cart: persisted.cart,
   qty: 1,
@@ -126,14 +126,14 @@ function renderInstall() {
 }
 
 function renderHome() {
-  const cats = categories();
+  const cats = getCategories();
   const products = getProducts();
-  const shown = state.activeCat ? products.filter((p) => p.cat === state.activeCat) : products.slice(0, 6);
-  const sectionTitle = state.activeCat || 'POPULAR PICKS';
+  const shown = state.activeCatId ? products.filter((p) => p.catId === state.activeCatId) : products.slice(0, 6);
+  const sectionTitle = state.activeCatId ? getCategoryName(state.activeCatId) : 'POPULAR PICKS';
   const count = cartCount();
 
-  const chips = cats.map((name, i) => `
-    <div class="chip ${state.activeCat === name ? 'chip--active' : ''}" data-action="filter-cat" data-cat="${escapeHtml(name)}">${escapeHtml(name)}</div>
+  const chips = cats.map((cat) => `
+    <div class="chip ${state.activeCatId === cat.id ? 'chip--active' : ''}" data-action="filter-cat" data-cat="${escapeHtml(cat.id)}">${escapeHtml(cat.name)}</div>
   `).join('');
 
   const cards = shown.map((p, i) => `
@@ -174,7 +174,7 @@ function renderProduct() {
       <div class="panel">
         <button class="back-row" data-action="go-home">← BACK</button>
         <div class="product-hero ${p.image ? '' : 'stripe-b'}">${p.image ? `<img src="${escapeHtml(p.image)}" alt="" />` : ''}</div>
-        <div class="cat-label">${escapeHtml(p.cat)}</div>
+        <div class="cat-label">${escapeHtml(getCategoryName(p.catId))}</div>
         <div class="product-title">${escapeHtml(p.name)}</div>
         <div class="product-detail-price">${money(p.price)}</div>
         <div class="product-desc">${escapeHtml(p.desc)}</div>
@@ -411,7 +411,7 @@ app.addEventListener('click', (e) => {
       break;
     }
     case 'filter-cat':
-      setState({ activeCat: state.activeCat === el.dataset.cat ? null : el.dataset.cat });
+      setState({ activeCatId: state.activeCatId === el.dataset.cat ? null : el.dataset.cat });
       break;
     case 'open-product':
       setState({ selectedId: el.dataset.id, screen: 'product', qty: 1 });
@@ -458,7 +458,7 @@ app.addEventListener('click', (e) => {
       state.orderStatus = null;
       clearPersisted();
       window.history.replaceState({}, '', window.location.pathname);
-      setState({ screen: 'home', activeCat: null });
+      setState({ screen: 'home', activeCatId: null });
       break;
   }
 });

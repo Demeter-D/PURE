@@ -14,6 +14,7 @@ const state = {
   authed: false,
   password: sessionStorage.getItem(PW_KEY) || '',
   tab: 'products',
+  categories: [],
   products: [],
   orders: [],
   ordersLoaded: false,
@@ -29,8 +30,8 @@ const escapeHtml = (str) =>
     '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;',
   }[c]));
 
-function slugify(name, existingIds) {
-  const base = name.toLowerCase().trim().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '') || 'item';
+function slugify(name, existingIds, fallback = 'item') {
+  const base = name.toLowerCase().trim().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '') || fallback;
   let id = base;
   let i = 2;
   while (existingIds.has(id)) {
@@ -85,9 +86,16 @@ function renderGate() {
 
 /* ---------------- Product table ---------------- */
 
+function categoryOptions(selectedId) {
+  return state.categories.map((c) => `
+    <option value="${escapeHtml(c.id)}" ${c.id === selectedId ? 'selected' : ''}>${escapeHtml(c.name)}</option>
+  `).join('');
+}
+
 function rowTemplate(p) {
   const id = p ? p.id : '';
   const image = p && p.image ? p.image : '';
+  const catId = p ? p.catId : (state.categories[0] ? state.categories[0].id : '');
   return `
     <div class="admin-row" data-id="${escapeHtml(id)}" data-image="${escapeHtml(image)}">
       ${id ? `<div class="admin-row-id">ID: ${escapeHtml(id)}</div>` : `<div class="admin-row-id">NEW PRODUCT — ID assigned on save</div>`}
@@ -98,7 +106,7 @@ function rowTemplate(p) {
           <div class="admin-photo-status"></div>
         </div>
         <div class="admin-row-fields">
-          <label>CATEGORY<input class="admin-field field-cat" value="${p ? escapeHtml(p.cat) : ''}" /></label>
+          <label>CATEGORY<select class="admin-field field-cat">${categoryOptions(catId)}</select></label>
           <label>NAME<input class="admin-field field-name" value="${p ? escapeHtml(p.name) : ''}" /></label>
           <label>PRICE (£)<input class="admin-field field-price" type="number" step="0.01" min="0" value="${p ? p.price : ''}" /></label>
           <button type="button" class="admin-btn admin-btn--danger row-delete" title="Delete">×</button>
@@ -167,16 +175,141 @@ function bindRowPhotoInputs() {
 }
 
 function renderProductsPanel() {
-  return `
-    <div id="rows" class="admin-table">
-      ${state.products.map(rowTemplate).join('')}
+  if (state.categories.length === 0) {
+    return `<div class="admin-banner admin-banner--error">Add a category first (Categories tab) before adding products.</div>`;
+  }
+
+  const groups = state.categories.map((cat) => {
+    const rows = state.products.filter((p) => p.catId === cat.id);
+    return `
+      <div class="admin-group">
+        <div class="admin-group-title">${escapeHtml(cat.name)}</div>
+        <div class="admin-table" data-cat-group="${escapeHtml(cat.id)}">
+          ${rows.map(rowTemplate).join('') || '<div class="admin-group-empty">No products in this category yet.</div>'}
+        </div>
+      </div>
+    `;
+  }).join('');
+
+  const knownCatIds = new Set(state.categories.map((c) => c.id));
+  const orphaned = state.products.filter((p) => !knownCatIds.has(p.catId));
+  const orphanGroup = orphaned.length ? `
+    <div class="admin-group">
+      <div class="admin-group-title">UNCATEGORISED</div>
+      <div class="admin-table" data-cat-group="">${orphaned.map(rowTemplate).join('')}</div>
     </div>
+  ` : '';
+
+  return `
+    <div id="rows">${groups}${orphanGroup}</div>
     <div class="admin-actions">
       <button id="addBtn" class="admin-btn">+ ADD PRODUCT</button>
       <button id="saveBtn" class="admin-btn admin-btn--primary" ${state.saving ? 'disabled' : ''}>${state.saving ? 'SAVING…' : 'SAVE CHANGES'}</button>
     </div>
   `;
 }
+
+/* ---------------- Categories ---------------- */
+
+function categoryRowTemplate(cat) {
+  const id = cat ? cat.id : '';
+  return `
+    <div class="admin-cat-row" data-id="${escapeHtml(id)}">
+      <input class="admin-field field-cat-name" value="${cat ? escapeHtml(cat.name) : ''}" placeholder="CATEGORY NAME" />
+      <button type="button" class="admin-btn admin-btn--danger cat-delete" title="Delete">×</button>
+    </div>
+  `;
+}
+
+function renderCategoriesPanel() {
+  return `
+    <div id="catRows" class="admin-table">
+      ${state.categories.map(categoryRowTemplate).join('')}
+    </div>
+    <div class="admin-actions">
+      <button id="addCatBtn" class="admin-btn">+ ADD CATEGORY</button>
+      <button id="saveCatBtn" class="admin-btn admin-btn--primary" ${state.saving ? 'disabled' : ''}>${state.saving ? 'SAVING…' : 'SAVE CATEGORIES'}</button>
+    </div>
+  `;
+}
+
+function bindCategoryDeletes() {
+  document.querySelectorAll('.cat-delete').forEach((btn) => {
+    btn.onclick = () => {
+      const row = btn.closest('.admin-cat-row');
+      const id = row.dataset.id;
+      if (id) {
+        const inUse = state.products.filter((p) => p.catId === id).length;
+        if (inUse > 0) {
+          window.alert(`${inUse} product${inUse === 1 ? '' : 's'} still use this category. Reassign them in the Products tab first.`);
+          return;
+        }
+        if (!window.confirm('Delete this category?')) return;
+      }
+      row.remove();
+    };
+  });
+}
+
+function collectCategoriesFromDom() {
+  const rows = Array.from(document.querySelectorAll('.admin-cat-row'));
+  const existingIds = new Set(rows.map((r) => r.dataset.id).filter(Boolean));
+  const categories = [];
+  const seenNames = new Set();
+
+  for (const row of rows) {
+    const name = row.querySelector('.field-cat-name').value.trim();
+    if (!name) continue; // ignore blank/untouched new rows
+
+    const key = name.toLowerCase();
+    if (seenNames.has(key)) throw new Error(`Category "${name}" is listed twice.`);
+    seenNames.add(key);
+
+    let id = row.dataset.id;
+    if (!id) {
+      id = slugify(name, existingIds, 'category');
+      existingIds.add(id);
+      row.dataset.id = id;
+    }
+    categories.push({ id, name });
+  }
+
+  if (categories.length === 0) throw new Error('Add at least one category.');
+  return categories;
+}
+
+async function saveCategories() {
+  state.banner = null;
+  let categories;
+  try {
+    categories = collectCategoriesFromDom();
+  } catch (err) {
+    state.banner = { type: 'error', text: err.message };
+    renderApp();
+    return;
+  }
+
+  state.saving = true;
+  renderApp();
+
+  try {
+    await adminFetch('/api/admin/products', {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ categories, products: state.products }),
+    });
+    state.categories = categories;
+    state.saving = false;
+    state.banner = { type: 'ok', text: 'Saved. Categories are live on the shop now.' };
+    renderApp();
+  } catch (err) {
+    state.saving = false;
+    state.banner = { type: 'error', text: err.message || 'Could not save categories.' };
+    renderApp();
+  }
+}
+
+/* ---------------- Orders ---------------- */
 
 function orderCardTemplate(order) {
   const items = (order.items || []).map((i) => `<div>${i.qty} × ${escapeHtml(i.name)}</div>`).join('') || '<div>(no item details)</div>';
@@ -220,6 +353,8 @@ function renderOrdersPanel() {
   `;
 }
 
+/* ---------------- Shell ---------------- */
+
 function renderApp() {
   app.innerHTML = `
     <div class="admin-header">
@@ -228,10 +363,11 @@ function renderApp() {
     </div>
     <div class="admin-tabs">
       <button class="admin-btn ${state.tab === 'products' ? 'admin-btn--primary' : ''}" data-tab="products">PRODUCTS</button>
+      <button class="admin-btn ${state.tab === 'categories' ? 'admin-btn--primary' : ''}" data-tab="categories">CATEGORIES</button>
       <button class="admin-btn ${state.tab === 'orders' ? 'admin-btn--primary' : ''}" data-tab="orders">ORDERS</button>
     </div>
     ${state.banner ? `<div class="admin-banner ${state.banner.type === 'error' ? 'admin-banner--error' : 'admin-banner--ok'}">${escapeHtml(state.banner.text)}</div>` : ''}
-    ${state.tab === 'products' ? renderProductsPanel() : renderOrdersPanel()}
+    ${state.tab === 'products' ? renderProductsPanel() : state.tab === 'categories' ? renderCategoriesPanel() : renderOrdersPanel()}
   `;
 
   document.getElementById('logoutBtn').addEventListener('click', () => {
@@ -252,14 +388,26 @@ function renderApp() {
   });
 
   if (state.tab === 'products') {
-    document.getElementById('addBtn').addEventListener('click', () => {
-      document.getElementById('rows').insertAdjacentHTML('beforeend', rowTemplate(null));
-      bindRowDeletes();
-      bindRowPhotoInputs();
-    });
-    document.getElementById('saveBtn').addEventListener('click', saveProducts);
+    const addBtn = document.getElementById('addBtn');
+    if (addBtn) {
+      addBtn.addEventListener('click', () => {
+        const container = document.querySelector('#rows [data-cat-group]') || document.getElementById('rows');
+        container.insertAdjacentHTML('beforeend', rowTemplate(null));
+        bindRowDeletes();
+        bindRowPhotoInputs();
+      });
+    }
+    const saveBtn = document.getElementById('saveBtn');
+    if (saveBtn) saveBtn.addEventListener('click', saveProducts);
     bindRowDeletes();
     bindRowPhotoInputs();
+  } else if (state.tab === 'categories') {
+    document.getElementById('addCatBtn').addEventListener('click', () => {
+      document.getElementById('catRows').insertAdjacentHTML('beforeend', categoryRowTemplate(null));
+      bindCategoryDeletes();
+    });
+    document.getElementById('saveCatBtn').addEventListener('click', saveCategories);
+    bindCategoryDeletes();
   } else {
     const refreshBtn = document.getElementById('refreshOrdersBtn');
     if (refreshBtn) refreshBtn.addEventListener('click', loadOrders);
@@ -315,14 +463,14 @@ function collectProductsFromDom() {
   const products = [];
 
   for (const row of rows) {
-    const cat = row.querySelector('.field-cat').value.trim();
+    const catId = row.querySelector('.field-cat').value;
     const name = row.querySelector('.field-name').value.trim();
     const priceRaw = row.querySelector('.field-price').value;
     const desc = row.querySelector('.field-desc').value.trim();
 
-    if (!cat && !name && !priceRaw && !desc) continue; // ignore untouched blank row
+    if (!name && priceRaw === '' && !desc) continue; // ignore untouched blank row
 
-    if (!cat || !name || priceRaw === '') {
+    if (!catId || !name || priceRaw === '') {
       throw new Error('Every product needs a category, name, and price.');
     }
     const price = Number(priceRaw);
@@ -338,7 +486,7 @@ function collectProductsFromDom() {
     }
     const image = row.dataset.image || '';
 
-    products.push({ id, cat, name, price, desc, image });
+    products.push({ id, catId, name, price, desc, image });
   }
 
   if (products.length === 0) throw new Error('Add at least one product.');
@@ -363,7 +511,7 @@ async function saveProducts() {
     await adminFetch('/api/admin/products', {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ products }),
+      body: JSON.stringify({ categories: state.categories, products }),
     });
     state.products = products;
     state.saving = false;
@@ -380,7 +528,9 @@ async function saveProducts() {
 
 async function loadAndRenderApp() {
   state.authed = true;
-  state.products = await adminFetch('/api/admin/products');
+  const data = await adminFetch('/api/admin/products');
+  state.categories = data.categories || [];
+  state.products = data.products || [];
   renderApp();
 }
 

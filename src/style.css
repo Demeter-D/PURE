@@ -606,6 +606,32 @@ textarea.admin-field { resize: vertical; min-height: 40px; font-family: var(--mo
   cursor: pointer;
 }
 .admin-status-btn--active { background: var(--ink); color: var(--paper); }
+.admin-group { margin-bottom: 24px; }
+.admin-group-title {
+  font-family: var(--mono);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  color: var(--muted-3);
+  border-bottom: 2px solid var(--ink);
+  padding-bottom: 6px;
+  margin-bottom: 10px;
+}
+.admin-group-empty {
+  font-family: var(--mono);
+  font-size: 11px;
+  color: var(--muted-4);
+  padding: 10px 2px;
+}
+.admin-cat-row {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  border: 2px solid var(--ink);
+  background: #fff;
+  padding: 10px 12px;
+}
+.admin-cat-row .field-cat-name { flex: 1; }
 
 /* ---------- Cabin modal ---------- */
 .modal-overlay {

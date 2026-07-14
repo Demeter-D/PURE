@@ -1,7 +1,7 @@
 // Public read-only endpoint the shop frontend fetches on load. Reads whatever
 // is currently in the catalog store (Edge Config, or the bundled fallback).
 
-import { getProducts } from './_lib/catalogStore.js';
+import { getCatalog } from './_lib/catalogStore.js';
 
 export default async function handler(req, res) {
   if (req.method !== 'GET') {
@@ -10,9 +10,9 @@ export default async function handler(req, res) {
   }
 
   try {
-    const products = await getProducts();
+    const catalog = await getCatalog();
     res.setHeader('Cache-Control', 'no-store');
-    return res.status(200).json(products);
+    return res.status(200).json(catalog);
   } catch (err) {
     console.error(err);
     return res.status(500).json({ error: 'Could not load products' });
