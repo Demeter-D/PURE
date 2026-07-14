@@ -92,10 +92,10 @@ function categoryOptions(selectedId) {
   `).join('');
 }
 
-function rowTemplate(p) {
+function rowTemplate(p, presetCatId) {
   const id = p ? p.id : '';
   const image = p && p.image ? p.image : '';
-  const catId = p ? p.catId : (state.categories[0] ? state.categories[0].id : '');
+  const catId = p ? p.catId : (presetCatId || (state.categories[0] ? state.categories[0].id : ''));
   return `
     <div class="admin-row" data-id="${escapeHtml(id)}" data-image="${escapeHtml(image)}">
       ${id ? `<div class="admin-row-id">ID: ${escapeHtml(id)}</div>` : `<div class="admin-row-id">NEW PRODUCT — ID assigned on save</div>`}
@@ -203,6 +203,7 @@ function renderProductsPanel() {
   return `
     <div id="rows">${groups}${orphanGroup}</div>
     <div class="admin-actions">
+      <select id="addCatSelect" class="admin-field" style="max-width: 220px;">${categoryOptions(state.categories[0].id)}</select>
       <button id="addBtn" class="admin-btn">+ ADD PRODUCT</button>
       <button id="saveBtn" class="admin-btn admin-btn--primary" ${state.saving ? 'disabled' : ''}>${state.saving ? 'SAVING…' : 'SAVE CHANGES'}</button>
     </div>
@@ -391,8 +392,11 @@ function renderApp() {
     const addBtn = document.getElementById('addBtn');
     if (addBtn) {
       addBtn.addEventListener('click', () => {
-        const container = document.querySelector('#rows [data-cat-group]') || document.getElementById('rows');
-        container.insertAdjacentHTML('beforeend', rowTemplate(null));
+        const catId = document.getElementById('addCatSelect').value;
+        const container = document.querySelector(`#rows [data-cat-group="${CSS.escape(catId)}"]`) || document.getElementById('rows');
+        const emptyNotice = container.querySelector('.admin-group-empty');
+        if (emptyNotice) emptyNotice.remove();
+        container.insertAdjacentHTML('beforeend', rowTemplate(null, catId));
         bindRowDeletes();
         bindRowPhotoInputs();
         const rows = container.querySelectorAll('.admin-row');
