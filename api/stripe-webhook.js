@@ -76,7 +76,8 @@ export default async function handler(req, res) {
     await notifySlack(order);
 
     const guestEmail = session.customer_details?.email || session.customer_email || '';
-    await sendOrderConfirmationEmail(order, guestEmail);
+    const trackingUrl = process.env.SITE_URL ? `${process.env.SITE_URL}/?order=${orderNumber}` : null;
+    await sendOrderConfirmationEmail({ ...order, trackingUrl }, guestEmail);
   }
 
   return res.status(200).json({ received: true });

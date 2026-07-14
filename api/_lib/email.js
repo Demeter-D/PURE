@@ -64,7 +64,12 @@ function renderReceiptHtml(order) {
           <td style="padding-top:14px;font-family:Arial,Helvetica,sans-serif;font-size:15px;font-weight:700;color:${INK};text-align:right;">${money(order.amountTotal)}</td>
         </tr>
       </table>
-      <div style="font-family:Arial,Helvetica,sans-serif;font-size:12px;color:#999999;margin-top:28px;line-height:1.5;">
+      ${order.trackingUrl ? `
+      <div style="margin-top:28px;">
+        <a href="${escapeHtml(order.trackingUrl)}" style="display:block;background:${INK};color:#ffffff;text-align:center;padding:14px;font-family:Arial,Helvetica,sans-serif;font-size:13px;font-weight:700;letter-spacing:0.05em;text-decoration:none;">TRACK YOUR ORDER</a>
+      </div>
+      ` : ''}
+      <div style="font-family:Arial,Helvetica,sans-serif;font-size:12px;color:#999999;margin-top:20px;line-height:1.5;">
         Questions about your order? Just reply to this email.
       </div>
     </div>
