@@ -1,42 +1,51 @@
-// Order persistence for tracking + the admin fulfillment view. Backed by a
-// Redis store (Vercel Marketplace "Redis" integration, powered by Upstash) —
-// unlike the product catalog, order data is written on every checkout and
-// grows over time, which doesn't fit Edge Config's small/rarely-written
-// design, so this uses a separate store.
+// Order persistence for tracking + the admin fulfillment view. Backed by
+// Redis Cloud (connected via Vercel's Redis integration, which provides a
+// standard connection string) — unlike the product catalog, order data is
+// written on every checkout and grows over time, which doesn't fit Edge
+// Config's small/rarely-written design, so this uses a separate store.
 
-import { Redis } from '@upstash/redis';
+import Redis from 'ioredis';
 
-let kv = null;
+let client = null;
 function getClient() {
-  if (kv) return kv;
-  const url = process.env.KV_REST_API_URL || process.env.UPSTASH_REDIS_REST_URL;
-  const token = process.env.KV_REST_API_TOKEN || process.env.UPSTASH_REDIS_REST_TOKEN;
-  if (!url || !token) {
-    throw new Error('Redis is not configured (missing KV_REST_API_URL/KV_REST_API_TOKEN env vars)');
+  if (client) return client;
+  const url = process.env.REDIS_URL;
+  if (!url) {
+    throw new Error('Redis is not configured (missing REDIS_URL env var)');
   }
-  kv = new Redis({ url, token });
-  return kv;
+  // Serverless-friendly settings: fail fast instead of ioredis's default of
+  // retrying forever / queuing commands while disconnected, which could
+  // otherwise hang a request until the function times out.
+  client = new Redis(url, {
+    connectTimeout: 5000,
+    maxRetriesPerRequest: 1,
+    enableOfflineQueue: false,
+    retryStrategy: () => null,
+  });
+  client.on('error', (err) => console.error('Redis connection error', err.message));
+  return client;
 }
 
 const RECENT_KEY = 'orders:recent';
 const MAX_RECENT = 200;
 
 export async function saveOrder(order) {
-  const client = getClient();
-  await client.set(`order:${order.orderNumber}`, order);
-  await client.lpush(RECENT_KEY, order.orderNumber);
-  await client.ltrim(RECENT_KEY, 0, MAX_RECENT - 1);
+  const redis = getClient();
+  await redis.set(`order:${order.orderNumber}`, JSON.stringify(order));
+  await redis.lpush(RECENT_KEY, order.orderNumber);
+  await redis.ltrim(RECENT_KEY, 0, MAX_RECENT - 1);
 }
 
 export async function getOrder(orderNumber) {
-  return getClient().get(`order:${orderNumber}`);
+  const raw = await getClient().get(`order:${orderNumber}`);
+  return raw ? JSON.parse(raw) : null;
 }
 
 export async function updateOrderStatus(orderNumber, status) {
   const order = await getOrder(orderNumber);
   if (!order) return null;
   const updated = { ...order, status };
-  await getClient().set(`order:${orderNumber}`, updated);
+  await getClient().set(`order:${orderNumber}`, JSON.stringify(updated));
   return updated;
 }
 

@@ -201,10 +201,10 @@ Edge Config and Blob stores above — orders are written on every checkout and
 keep growing, which doesn't fit Edge Config's small/rarely-written design, so
 this needs its own store):
 
-1. **Storage** tab → **Create Database** → look for **Redis** (via the
-   Upstash marketplace integration) → name it (e.g. `pure-orders`) → connect
-   it to this project. This adds `KV_REST_API_URL` / `KV_REST_API_TOKEN`
-   environment variables automatically.
+1. **Storage** tab → **Create Database** → **Redis** (the official Redis
+   Cloud marketplace integration) → name it (e.g. `pure-orders`) → connect it
+   to this project. This adds a `REDIS_URL` environment variable
+   automatically (a standard `rediss://...` connection string).
 2. Redeploy.
 
 **Slack notifications** (optional, but you asked — here's how):
