@@ -632,6 +632,12 @@ textarea.admin-field { resize: vertical; min-height: 40px; font-family: var(--mo
   padding: 10px 12px;
 }
 .admin-cat-row .field-cat-name { flex: 1; }
+.admin-cat-move { display: flex; flex-direction: column; gap: 2px; }
+.admin-cat-move .admin-btn {
+  padding: 2px 8px;
+  font-size: 9px;
+  line-height: 1.4;
+}
 
 /* ---------- Cabin modal ---------- */
 .modal-overlay {

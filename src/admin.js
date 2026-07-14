@@ -216,6 +216,10 @@ function categoryRowTemplate(cat) {
   const id = cat ? cat.id : '';
   return `
     <div class="admin-cat-row" data-id="${escapeHtml(id)}">
+      <div class="admin-cat-move">
+        <button type="button" class="admin-btn cat-move-up" title="Move up">▲</button>
+        <button type="button" class="admin-btn cat-move-down" title="Move down">▼</button>
+      </div>
       <input class="admin-field field-cat-name" value="${cat ? escapeHtml(cat.name) : ''}" placeholder="CATEGORY NAME" />
       <button type="button" class="admin-btn admin-btn--danger cat-delete" title="Delete">×</button>
     </div>
@@ -250,6 +254,34 @@ function bindCategoryDeletes() {
       row.remove();
     };
   });
+}
+
+function updateCategoryMoveButtons() {
+  const rows = Array.from(document.querySelectorAll('.admin-cat-row'));
+  rows.forEach((row, i) => {
+    row.querySelector('.cat-move-up').disabled = i === 0;
+    row.querySelector('.cat-move-down').disabled = i === rows.length - 1;
+  });
+}
+
+function bindCategoryMoves() {
+  document.querySelectorAll('.cat-move-up').forEach((btn) => {
+    btn.onclick = () => {
+      const row = btn.closest('.admin-cat-row');
+      const prev = row.previousElementSibling;
+      if (prev) row.parentElement.insertBefore(row, prev);
+      updateCategoryMoveButtons();
+    };
+  });
+  document.querySelectorAll('.cat-move-down').forEach((btn) => {
+    btn.onclick = () => {
+      const row = btn.closest('.admin-cat-row');
+      const next = row.nextElementSibling;
+      if (next) row.parentElement.insertBefore(next, row);
+      updateCategoryMoveButtons();
+    };
+  });
+  updateCategoryMoveButtons();
 }
 
 function collectCategoriesFromDom() {
@@ -413,9 +445,11 @@ function renderApp() {
     document.getElementById('addCatBtn').addEventListener('click', () => {
       document.getElementById('catRows').insertAdjacentHTML('beforeend', categoryRowTemplate(null));
       bindCategoryDeletes();
+      bindCategoryMoves();
     });
     document.getElementById('saveCatBtn').addEventListener('click', saveCategories);
     bindCategoryDeletes();
+    bindCategoryMoves();
   } else {
     const refreshBtn = document.getElementById('refreshOrdersBtn');
     if (refreshBtn) refreshBtn.addEventListener('click', loadOrders);
