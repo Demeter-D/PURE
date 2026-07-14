@@ -86,12 +86,19 @@ localhost:3000/api/stripe-webhook` (use whatever port `vercel dev` prints).
 
 ## Icons
 
-`scripts/generate-icons.mjs` generates placeholder PWA icons (black square,
-centered accent-green square) using nothing but Node's built-in `zlib` — no
-image library needed. Run `npm run generate-icons` to regenerate them. Before
-a real launch, replace `public/icons/*.png` with real artwork built from the
-PURE wordmark (192×192, 512×512, and a maskable 512×512 with ~20% safe-zone
-padding).
+The browser-tab favicon (`public/icons/favicon-{16,32,48}.png`,
+`apple-touch-icon.png`) and the social-share preview image
+(`public/og-image.png`, linked via the `og:image`/`twitter:image` tags in
+`index.html`) are a bold "P" monogram / "PURE" wordmark on the brand
+black-and-green, rendered from `favicon-template.html`/`og-template.html`
+(one-off HTML files used to generate these, not part of the shipped site).
+
+Separately, `scripts/generate-icons.mjs` generates the *PWA install* icons
+(black square, centered accent-green square) using nothing but Node's
+built-in `zlib` — no image library needed. Run `npm run generate-icons` to
+regenerate them. Before a real launch, consider replacing
+`public/icons/icon-{192,512,maskable-512}.png` with matching artwork built
+from the PURE wordmark.
 
 Product photography is likewise still a striped placeholder
 (`repeating-linear-gradient` in `src/style.css`, `.stripe-a` / `.stripe-b`) —
