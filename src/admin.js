@@ -344,6 +344,15 @@ async function saveCategories() {
 
 /* ---------------- Orders ---------------- */
 
+function formatOrderTime(ts) {
+  if (!ts) return '—';
+  return new Date(ts)
+    .toLocaleString('en-GB', {
+      day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit',
+    })
+    .toUpperCase();
+}
+
 function orderCardTemplate(order) {
   const items = (order.items || []).map((i) => `<div>${i.qty} × ${escapeHtml(i.name)}</div>`).join('') || '<div>(no item details)</div>';
   const statusBtns = ORDER_STATUSES.map((s) => `
@@ -361,6 +370,7 @@ function orderCardTemplate(order) {
         <div class="admin-order-number">#${escapeHtml(order.orderNumber)}</div>
         <div class="admin-order-amount">£${((order.amountTotal || 0) / 100).toFixed(2)}</div>
       </div>
+      <div class="admin-order-meta">${escapeHtml(formatOrderTime(order.createdAt))}</div>
       <div class="admin-order-meta">CABIN ${escapeHtml(order.cabinName || '—')} · ${escapeHtml(order.deliverySlot || '—')}</div>
       <div class="admin-order-items">${items}</div>
       <div class="admin-status-buttons">${statusBtns}</div>
