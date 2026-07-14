@@ -84,6 +84,7 @@ export async function sendOrderConfirmationEmail(order, toEmail) {
     await resend.emails.send({
       from,
       to: toEmail,
+      replyTo: process.env.EMAIL_REPLY_TO || undefined,
       subject: `Your PURE order #${order.orderNumber} is confirmed`,
       html: renderReceiptHtml(order),
     });

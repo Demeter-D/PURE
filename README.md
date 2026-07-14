@@ -255,6 +255,14 @@ npx vercel env add EMAIL_FROM production
 ```
 with a value like `PURE <orders@yourdomain.com>`.
 
+**Replies**: the email says "just reply to this email" — for that to actually
+reach anyone, set `EMAIL_REPLY_TO` to an inbox you check (this works
+independently of `EMAIL_FROM`/domain verification, so it's worth setting even
+before you have a custom domain):
+```
+npx vercel env add EMAIL_REPLY_TO production
+```
+
 Without `RESEND_API_KEY` set, everything else still works — guests just won't
 get the branded email (Stripe's own receipt toggle, if enabled, still applies
 independently).
