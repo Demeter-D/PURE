@@ -3,10 +3,21 @@ import './style.css';
 const PW_KEY = 'pure_admin_pw_v1';
 const app = document.getElementById('admin-app');
 
+const ORDER_STATUSES = [
+  { key: 'received', label: 'RECEIVED' },
+  { key: 'preparing', label: 'PREPARING' },
+  { key: 'on_the_way', label: 'ON THE WAY' },
+  { key: 'delivered', label: 'DELIVERED' },
+];
+
 const state = {
   authed: false,
   password: sessionStorage.getItem(PW_KEY) || '',
+  tab: 'products',
   products: [],
+  orders: [],
+  ordersLoaded: false,
+  ordersLoading: false,
   checkingAuth: true,
   authError: null,
   banner: null,
@@ -155,13 +166,8 @@ function bindRowPhotoInputs() {
   });
 }
 
-function renderApp() {
-  app.innerHTML = `
-    <div class="admin-header">
-      <div class="admin-title">PURE — PRODUCT ADMIN</div>
-      <button id="logoutBtn" class="admin-btn">LOG OUT</button>
-    </div>
-    ${state.banner ? `<div class="admin-banner ${state.banner.type === 'error' ? 'admin-banner--error' : 'admin-banner--ok'}">${escapeHtml(state.banner.text)}</div>` : ''}
+function renderProductsPanel() {
+  return `
     <div id="rows" class="admin-table">
       ${state.products.map(rowTemplate).join('')}
     </div>
@@ -169,6 +175,63 @@ function renderApp() {
       <button id="addBtn" class="admin-btn">+ ADD PRODUCT</button>
       <button id="saveBtn" class="admin-btn admin-btn--primary" ${state.saving ? 'disabled' : ''}>${state.saving ? 'SAVING…' : 'SAVE CHANGES'}</button>
     </div>
+  `;
+}
+
+function orderCardTemplate(order) {
+  const items = (order.items || []).map((i) => `<div>${i.qty} × ${escapeHtml(i.name)}</div>`).join('') || '<div>(no item details)</div>';
+  const statusBtns = ORDER_STATUSES.map((s) => `
+    <button
+      type="button"
+      class="admin-status-btn ${order.status === s.key ? 'admin-status-btn--active' : ''}"
+      data-order="${escapeHtml(order.orderNumber)}"
+      data-status="${s.key}"
+    >${s.label}</button>
+  `).join('');
+
+  return `
+    <div class="admin-order-card">
+      <div class="admin-order-head">
+        <div class="admin-order-number">#${escapeHtml(order.orderNumber)}</div>
+        <div class="admin-order-amount">£${((order.amountTotal || 0) / 100).toFixed(2)}</div>
+      </div>
+      <div class="admin-order-meta">CABIN ${escapeHtml(order.cabinName || '—')} · ${escapeHtml(order.deliverySlot || '—')}</div>
+      <div class="admin-order-items">${items}</div>
+      <div class="admin-status-buttons">${statusBtns}</div>
+    </div>
+  `;
+}
+
+function renderOrdersPanel() {
+  if (state.ordersLoading) {
+    return `<div class="admin-banner">Loading orders…</div>`;
+  }
+  if (state.orders.length === 0) {
+    return `
+      <div class="admin-banner">No orders yet.</div>
+      <div class="admin-actions"><button id="refreshOrdersBtn" class="admin-btn">REFRESH</button></div>
+    `;
+  }
+  return `
+    <div class="admin-actions" style="margin-bottom:16px;"><button id="refreshOrdersBtn" class="admin-btn">REFRESH</button></div>
+    <div class="admin-orders">
+      ${state.orders.map(orderCardTemplate).join('')}
+    </div>
+  `;
+}
+
+function renderApp() {
+  app.innerHTML = `
+    <div class="admin-header">
+      <div class="admin-title">PURE — ADMIN</div>
+      <button id="logoutBtn" class="admin-btn">LOG OUT</button>
+    </div>
+    <div class="admin-tabs">
+      <button class="admin-btn ${state.tab === 'products' ? 'admin-btn--primary' : ''}" data-tab="products">PRODUCTS</button>
+      <button class="admin-btn ${state.tab === 'orders' ? 'admin-btn--primary' : ''}" data-tab="orders">ORDERS</button>
+    </div>
+    ${state.banner ? `<div class="admin-banner ${state.banner.type === 'error' ? 'admin-banner--error' : 'admin-banner--ok'}">${escapeHtml(state.banner.text)}</div>` : ''}
+    ${state.tab === 'products' ? renderProductsPanel() : renderOrdersPanel()}
   `;
 
   document.getElementById('logoutBtn').addEventListener('click', () => {
@@ -179,16 +242,60 @@ function renderApp() {
     renderGate();
   });
 
-  document.getElementById('addBtn').addEventListener('click', () => {
-    document.getElementById('rows').insertAdjacentHTML('beforeend', rowTemplate(null));
-    bindRowDeletes();
-    bindRowPhotoInputs();
+  document.querySelectorAll('[data-tab]').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      state.tab = btn.dataset.tab;
+      state.banner = null;
+      renderApp();
+      if (state.tab === 'orders' && !state.ordersLoaded) loadOrders();
+    });
   });
 
-  document.getElementById('saveBtn').addEventListener('click', saveProducts);
+  if (state.tab === 'products') {
+    document.getElementById('addBtn').addEventListener('click', () => {
+      document.getElementById('rows').insertAdjacentHTML('beforeend', rowTemplate(null));
+      bindRowDeletes();
+      bindRowPhotoInputs();
+    });
+    document.getElementById('saveBtn').addEventListener('click', saveProducts);
+    bindRowDeletes();
+    bindRowPhotoInputs();
+  } else {
+    const refreshBtn = document.getElementById('refreshOrdersBtn');
+    if (refreshBtn) refreshBtn.addEventListener('click', loadOrders);
+    document.querySelectorAll('.admin-status-btn').forEach((btn) => {
+      btn.addEventListener('click', () => setOrderStatus(btn.dataset.order, btn.dataset.status));
+    });
+  }
+}
 
-  bindRowDeletes();
-  bindRowPhotoInputs();
+async function loadOrders() {
+  state.ordersLoading = true;
+  state.banner = null;
+  renderApp();
+  try {
+    state.orders = await adminFetch('/api/admin/orders');
+    state.ordersLoaded = true;
+  } catch (err) {
+    state.banner = { type: 'error', text: err.message || 'Could not load orders.' };
+  }
+  state.ordersLoading = false;
+  renderApp();
+}
+
+async function setOrderStatus(orderNumber, status) {
+  try {
+    const updated = await adminFetch('/api/admin/orders', {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ orderNumber, status }),
+    });
+    state.orders = state.orders.map((o) => (o.orderNumber === updated.orderNumber ? updated : o));
+    renderApp();
+  } catch (err) {
+    state.banner = { type: 'error', text: err.message || 'Could not update order status.' };
+    renderApp();
+  }
 }
 
 function bindRowDeletes() {

@@ -4,6 +4,8 @@
 // subscribed to the "checkout.session.completed" event.
 
 import Stripe from 'stripe';
+import { saveOrder } from './_lib/orderStore.js';
+import { notifySlack } from './_lib/slack.js';
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
 const endpointSecret = process.env.STRIPE_WEBHOOK_SECRET;
@@ -43,15 +45,34 @@ export default async function handler(req, res) {
   if (event.type === 'checkout.session.completed') {
     const session = event.data.object;
     const { cabinName, deliverySlot } = session.metadata || {};
+    const orderNumber = session.id.slice(-8).toUpperCase();
 
-    // TODO: persist the order (KV store / database) as "Received", e.g.:
-    // await ORDERS_KV.put(session.id, JSON.stringify({
-    //   status: 'Received', cabinName, deliverySlot, amount: session.amount_total,
-    // }));
+    let items = [];
+    try {
+      const lineItems = await stripe.checkout.sessions.listLineItems(session.id, { limit: 100 });
+      items = lineItems.data.map((li) => ({ name: li.description, qty: li.quantity }));
+    } catch (err) {
+      console.error('Could not fetch line items for', session.id, err);
+    }
 
-    // TODO: notify staff — email, Slack webhook, or a Google Sheets append —
-    // so someone knows to prep the delivery.
-    console.log(`New order ${session.id} for cabin ${cabinName}, slot ${deliverySlot}, amount ${session.amount_total}`);
+    const order = {
+      orderNumber,
+      sessionId: session.id,
+      cabinName: cabinName || '',
+      deliverySlot: deliverySlot || '',
+      items,
+      amountTotal: session.amount_total,
+      status: 'received',
+      createdAt: Date.now(),
+    };
+
+    try {
+      await saveOrder(order);
+    } catch (err) {
+      console.error('Could not save order', order.orderNumber, err);
+    }
+
+    await notifySlack(order);
   }
 
   return res.status(200).json({ received: true });

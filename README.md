@@ -28,8 +28,13 @@ api/
   session.js                      GET  — looks up a session for the confirmation screen
   admin/login.js                  POST — validates the admin password
   admin/products.js               GET/PUT — password-gated catalog read/write
+  admin/upload.js                 POST — password-gated product photo upload (Blob)
+  admin/orders.js                  GET/PUT — password-gated order list + status update
+  order-status.js                 GET  — public order status lookup (confirmation screen polls this)
   _lib/catalogStore.js            reads/writes the catalog (Edge Config, with the
                                    bundled JSON as fallback)
+  _lib/orderStore.js              reads/writes orders (Redis)
+  _lib/slack.js                   posts new-order notifications to Slack, if configured
   _lib/adminAuth.js                shared password check for the admin/* routes
 public/
   manifest.json, service-worker.js, icons/   PWA shell (icons are placeholders — see below)
@@ -182,10 +187,40 @@ The browser resizes/compresses photos to a reasonable size before uploading
 (so a multi-MB phone photo doesn't hit upload limits or slow the shop down),
 and only JPEG/PNG/WebP are accepted, up to 8MB.
 
-## Fulfilling orders
+## Order tracking and fulfilling orders
 
-Right now, `api/stripe-webhook.js` just logs new orders — there's no
-persistence or staff notification wired up yet (two `TODO`s in that file mark
-where to add a KV/database write and an email/Slack notification). Until
-that's built, keep an eye on the Stripe Dashboard's Payments list for new
-orders, or wire up one of the TODOs.
+When a payment completes, the webhook saves the order (cabin, delivery
+window, items, status) and — if configured — posts it to Slack. The
+confirmation screen the guest sees polls for real status updates every 10
+seconds, and `/admin`'s **Orders** tab is where you mark each order Received →
+Preparing → On the way → Delivered as you fulfill it; the guest's screen
+updates automatically.
+
+**One-time setup for order storage** (a third small database, alongside the
+Edge Config and Blob stores above — orders are written on every checkout and
+keep growing, which doesn't fit Edge Config's small/rarely-written design, so
+this needs its own store):
+
+1. **Storage** tab → **Create Database** → look for **Redis** (via the
+   Upstash marketplace integration) → name it (e.g. `pure-orders`) → connect
+   it to this project. This adds `KV_REST_API_URL` / `KV_REST_API_TOKEN`
+   environment variables automatically.
+2. Redeploy.
+
+**Slack notifications** (optional, but you asked — here's how):
+
+1. Go to a Slack app config page (Slack → your workspace → search "Incoming
+   Webhooks" in the App Directory, or api.slack.com/apps → **Create New App**
+   → **From scratch** → pick your workspace).
+2. Under **Incoming Webhooks**, toggle it on → **Add New Webhook to
+   Workspace** → choose the channel new orders should post to → **Allow**.
+3. Copy the webhook URL it gives you (looks like
+   `https://hooks.slack.com/services/…`).
+4. Add it as an env var and redeploy:
+   ```
+   npx vercel env add SLACK_WEBHOOK_URL production
+   ```
+
+Without `SLACK_WEBHOOK_URL` set, everything else still works — you just won't
+get a Slack ping, and would need to check `/admin`'s Orders tab or the Stripe
+Dashboard's Payments list manually.

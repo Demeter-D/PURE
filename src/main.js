@@ -16,10 +16,35 @@ const state = {
   deliverySlot: null,
   orderNumber: null,
   orderMeta: null,
+  orderStatus: null,
   loading: false,
   error: null,
   cabinModalOpen: false,
 };
+
+let statusPollId = null;
+function stopStatusPolling() {
+  if (statusPollId) {
+    clearInterval(statusPollId);
+    statusPollId = null;
+  }
+}
+function startStatusPolling(orderNumber) {
+  stopStatusPolling();
+  statusPollId = setInterval(async () => {
+    try {
+      const res = await fetch(`/api/order-status?order=${encodeURIComponent(orderNumber)}`);
+      if (!res.ok) return;
+      const data = await res.json();
+      if (data.status && data.status !== state.orderStatus) {
+        state.orderStatus = data.status;
+        render();
+      }
+    } catch {
+      /* transient network hiccup — next poll will retry */
+    }
+  }, 10000);
+}
 
 let deferredInstallPrompt = null;
 window.addEventListener('beforeinstallprompt', (e) => {
@@ -75,7 +100,12 @@ function go(screen) {
 }
 
 const TIME_SLOTS = ['4–5 PM', '5–6 PM', '6–7 PM'];
-const STATUS_STEPS = ['RECEIVED', 'PREPARING', 'ON THE WAY', 'DELIVERED'];
+const STATUS_STEPS = [
+  { key: 'received', label: 'RECEIVED' },
+  { key: 'preparing', label: 'PREPARING' },
+  { key: 'on_the_way', label: 'ON THE WAY' },
+  { key: 'delivered', label: 'DELIVERED' },
+];
 
 /* ---------------- Screens ---------------- */
 
@@ -227,10 +257,11 @@ function renderCart() {
 function renderConfirm() {
   const meta = state.orderMeta || {};
   const deliverySummary = `CABIN ${escapeHtml(meta.cabinName || state.cabinName || '—')} · ${meta.deliverySlot || 'WINDOW PENDING'}`;
-  const steps = STATUS_STEPS.map((label, i) => `
+  const currentIdx = Math.max(0, STATUS_STEPS.findIndex((s) => s.key === state.orderStatus));
+  const steps = STATUS_STEPS.map((step, i) => `
     <div class="status-step">
-      <div class="status-dot ${i <= 1 ? 'status-dot--done' : ''}"></div>
-      <div class="status-label ${i <= 1 ? 'status-label--done' : ''}">${label}</div>
+      <div class="status-dot ${i <= currentIdx ? 'status-dot--done' : ''}"></div>
+      <div class="status-label ${i <= currentIdx ? 'status-label--done' : ''}">${step.label}</div>
     </div>
   `).join('');
 
@@ -418,11 +449,14 @@ app.addEventListener('click', (e) => {
       startCheckout();
       break;
     case 'back-to-shop':
+      stopStatusPolling();
       state.cart = {};
       state.deliverySlot = null;
       state.orderNumber = null;
       state.orderMeta = null;
+      state.orderStatus = null;
       clearPersisted();
+      window.history.replaceState({}, '', window.location.pathname);
       setState({ screen: 'home', activeCat: null });
       break;
   }
@@ -433,6 +467,7 @@ app.addEventListener('click', (e) => {
 async function hydrateFromStripeRedirect() {
   const params = new URLSearchParams(window.location.search);
   const sessionId = params.get('session_id');
+  const orderParam = params.get('order');
 
   if (params.has('checkout')) {
     window.history.replaceState({}, '', window.location.pathname);
@@ -440,9 +475,32 @@ async function hydrateFromStripeRedirect() {
     return true;
   }
 
+  // Revisiting/reloading a confirmation page (session_id already exchanged
+  // for a stable order number last time) — just re-fetch current status.
+  if (!sessionId && orderParam) {
+    setState({ loading: true });
+    try {
+      const res = await fetch(`/api/order-status?order=${encodeURIComponent(orderParam)}`);
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Order not found');
+
+      setState({
+        loading: false,
+        screen: 'confirm',
+        orderNumber: data.orderNumber,
+        orderStatus: data.status,
+        orderMeta: { cabinName: data.cabinName, deliverySlot: data.deliverySlot },
+      });
+      startStatusPolling(data.orderNumber);
+    } catch (err) {
+      window.history.replaceState({}, '', window.location.pathname);
+      setState({ loading: false, screen: 'home', error: err.message || 'Could not find that order.' });
+    }
+    return true;
+  }
+
   if (!sessionId) return false;
 
-  window.history.replaceState({}, '', window.location.pathname);
   setState({ loading: true });
 
   try {
@@ -450,15 +508,20 @@ async function hydrateFromStripeRedirect() {
     const data = await res.json();
     if (!res.ok || !data.paid) throw new Error(data.error || 'Could not verify payment');
 
+    const orderNumber = sessionId.slice(-8).toUpperCase();
     clearPersisted();
+    window.history.replaceState({}, '', `${window.location.pathname}?order=${orderNumber}`);
     setState({
       loading: false,
       screen: 'confirm',
       cart: {},
-      orderNumber: sessionId.slice(-8).toUpperCase(),
+      orderNumber,
+      orderStatus: 'received',
       orderMeta: { cabinName: data.cabinName, deliverySlot: data.deliverySlot },
     });
+    startStatusPolling(orderNumber);
   } catch (err) {
+    window.history.replaceState({}, '', window.location.pathname);
     setState({ loading: false, screen: 'cart', error: err.message || 'Could not verify your payment.' });
   }
   return true;
