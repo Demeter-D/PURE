@@ -55,7 +55,7 @@ button, input {
 .screen--light { background: var(--paper); }
 
 /* ---------- Wordmark lockup (PURE × Stockley) ---------- */
-.lockup { display: flex; align-items: baseline; gap: 12px; }
+.lockup { display: flex; align-items: baseline; gap: 8px; }
 .lockup-x { font-family: var(--mono); font-weight: 700; color: var(--green); }
 .stockley-word { font-family: var(--stockley-mark); font-style: italic; color: var(--paper); }
 .stockley-word--dark { color: var(--ink); }
@@ -90,16 +90,16 @@ button, input {
   flex-direction: column;
   align-items: center;
   text-align: center;
-  padding: 70px 22px 32px;
+  padding: 70px 14px 32px;
 }
 .wordmark-big {
   font-family: var(--disp);
-  font-size: 42px;
+  font-size: 53px;
   color: var(--paper);
   letter-spacing: -0.01em;
   line-height: 1;
 }
-.wordmark-big.lockup .stockley-word { font-size: 42px; }
+.wordmark-big.lockup .stockley-word { font-size: 53px; }
 .mono-tag {
   font-family: var(--mono);
   font-weight: 700;
@@ -153,10 +153,10 @@ button, input {
 }
 .wordmark {
   font-family: var(--disp);
-  font-size: 20px;
+  font-size: 25px;
   color: var(--paper);
 }
-.wordmark.lockup .stockley-word { font-size: 20px; }
+.wordmark.lockup .stockley-word { font-size: 25px; }
 .cabin-tag {
   font-family: var(--mono);
   font-size: 10px;
