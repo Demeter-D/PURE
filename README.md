@@ -116,6 +116,14 @@ Ink/Ember palette (see "PURE × Stockley collaboration" below), rendered from
 `favicon-template.html`/`og-template.html` (one-off HTML files used to
 generate these, not part of the shipped site).
 
+`public/og-admin.png`, linked from `admin.html`, is a separate share preview
+for the `/admin` link — a "STAFF ONLY" / "PURE — ADMIN" treatment (no
+Stockley branding, since the admin panel isn't co-branded) so it's obviously
+distinct from the shop link if it's ever pasted into a chat. `admin.html`
+also keeps `<meta name="robots" content="noindex, nofollow">`, which stops
+search engines but not link-preview bots — hence the deliberately
+not-for-guests messaging on the image itself.
+
 Separately, `scripts/generate-icons.mjs` generates the *PWA install* icons
 (Ink square, centered Ember square) using nothing but Node's
 built-in `zlib` — no image library needed. Run `npm run generate-icons` to
